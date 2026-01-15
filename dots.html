@@ -1,165 +1,307 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>3D Dot Pattern Generator</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { margin: 0; overflow: hidden; background-color: #111; color: white; font-family: 'Inter', sans-serif; }
-        #canvas-container { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 0; }
-        
-        /* Custom Scrollbar for controls */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #1f2937; }
-        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #111;
+            color: white;
+            font-family: 'Inter', sans-serif;
+        }
+
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 0;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #374151;
+            border-radius: 2px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4b5563;
+        }
+
+        /* Modern Range Input */
+        input[type=range] {
+            -webkit-appearance: none;
+            background: transparent;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 14px;
+            width: 14px;
+            border-radius: 50%;
+            background: #22d3ee;
+            cursor: pointer;
+            margin-top: -5px;
+            box-shadow: 0 0 10px rgba(34, 211, 238, 0.5);
+        }
+
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #374151;
+            border-radius: 2px;
+        }
+
+        /* Checkbox Customization */
+        input[type=checkbox] {
+            accent-color: #22d3ee;
+        }
 
         .control-group {
-            margin-bottom: 1.5rem;
-            border-bottom: 1px solid #374151;
-            padding-bottom: 1.5rem;
+            margin-bottom: 1.25rem;
+            padding-bottom: 1.25rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
-        .control-group:last-child { border-bottom: none; }
+
+        .control-group:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
     </style>
 </head>
+
 <body>
 
     <!-- 3D Canvas -->
     <div id="canvas-container"></div>
 
     <!-- UI Controls -->
-    <div class="absolute top-4 right-4 w-80 bg-gray-900/90 backdrop-blur-md border border-gray-700 p-5 rounded-xl shadow-2xl max-h-[90vh] overflow-y-auto z-10 transition-transform duration-300" id="controls">
-        <div class="flex justify-between items-center mb-4">
-            <h1 class="text-xl font-bold text-white tracking-tight">DotGen 3D</h1>
-            <button id="toggle-ui" class="text-gray-400 hover:text-white text-sm">Hide</button>
-        </div>
+    <div id="controls"
+        class="fixed top-4 right-4 w-80 bg-gray-900/90 backdrop-blur-md border border-gray-700/50 rounded-xl shadow-2xl flex flex-col max-h-[calc(100vh-2rem)] transition-all duration-300 z-50">
 
-        <!-- Colors -->
-        <div class="control-group">
-            <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Colors</h2>
-            <div class="space-y-3">
-                <div class="flex items-center justify-between">
-                    <label class="text-sm">Foreground</label>
-                    <input type="color" id="fg-color" value="#00ffff" class="bg-transparent border-none w-8 h-8 cursor-pointer">
-                </div>
-                <div class="flex items-center justify-between">
-                    <label class="text-sm">Background</label>
-                    <input type="color" id="bg-color" value="#051020" class="bg-transparent border-none w-8 h-8 cursor-pointer">
-                </div>
+        <!-- Header -->
+        <div class="px-5 py-4 border-b border-white/5 flex justify-between items-center bg-white/5">
+            <div class="flex items-center gap-2">
+                <div class="w-2 h-2 rounded-full bg-cyan-500 shadow-[0_0_8px_rgba(6,182,212,0.6)]"></div>
+                <h1 class="text-sm font-bold text-white tracking-wide uppercase">Dots </h1>
             </div>
-        </div>
-
-        <!-- Pattern Settings -->
-        <div class="control-group">
-            <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Grid Layout</h2>
-            
-            <div class="mb-3">
-                <div class="flex justify-between mb-1">
-                    <label class="text-xs text-gray-300">Dot Count (Density)</label>
-                    <span id="density-val" class="text-xs font-mono text-cyan-400">50</span>
-                </div>
-                <input type="range" id="density" min="10" max="100" value="50" class="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer">
-            </div>
-
-            <div class="mb-3">
-                <div class="flex justify-between mb-1">
-                    <label class="text-xs text-gray-300">Dot Size</label>
-                    <span id="size-val" class="text-xs font-mono text-cyan-400">0.4</span>
-                </div>
-                <input type="range" id="dot-size" min="0.1" max="1.0" step="0.05" value="0.4" class="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer">
-            </div>
-
-            <div class="mb-3">
-                <div class="flex justify-between mb-1">
-                    <label class="text-xs text-gray-300">Sheet Curvature</label>
-                    <span id="curve-val" class="text-xs font-mono text-cyan-400">0</span>
-                </div>
-                <input type="range" id="curvature" min="-5" max="5" step="0.1" value="0" class="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer">
-            </div>
-             <div class="mb-1">
-                <div class="flex justify-between mb-1">
-                    <label class="text-xs text-gray-300">Wave Effect</label>
-                    <span id="wave-val" class="text-xs font-mono text-cyan-400">0</span>
-                </div>
-                <input type="range" id="wave" min="0" max="2" step="0.1" value="0" class="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+            <div class="flex items-center gap-1">
+                <a href="kineticflow.html" title="Previous: Kinetic Flow"
+                    class="text-gray-400 hover:text-white transition-colors p-1 hover:bg-white/10 rounded">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m15 18-6-6 6-6" />
+                    </svg>
+                </a>
+                <a href="etherealblobs.html" title="Next: Ethereal Blobs"
+                    class="text-gray-400 hover:text-white transition-colors p-1 hover:bg-white/10 rounded">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m9 18 6-6-6-6" />
+                    </svg>
+                </a>
+                <div class="w-px h-4 bg-gray-700 mx-1"></div>
+                <button id="toggle-ui"
+                    class="text-gray-400 hover:text-white transition-colors p-1 hover:bg-white/10 rounded">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 6 6 18" />
+                        <path d="m6 6 12 12" />
+                    </svg>
+                </button>
             </div>
         </div>
 
-        <!-- Rotation -->
-        <div class="control-group">
-            <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Pattern Rotation</h2>
-            
-            <div class="mb-3">
-                <div class="flex justify-between mb-1">
-                    <label class="text-xs text-gray-300">Rotate X</label>
-                    <span id="rot-x-val" class="text-xs font-mono text-cyan-400">0°</span>
-                </div>
-                <input type="range" id="rot-x" min="-180" max="180" value="0" class="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer">
-            </div>
-            <div class="mb-3">
-                <div class="flex justify-between mb-1">
-                    <label class="text-xs text-gray-300">Rotate Y</label>
-                    <span id="rot-y-val" class="text-xs font-mono text-cyan-400">0°</span>
-                </div>
-                <input type="range" id="rot-y" min="-180" max="180" value="0" class="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer">
-            </div>
-            <div class="mb-1">
-                <div class="flex justify-between mb-1">
-                    <label class="text-xs text-gray-300">Rotate Z</label>
-                    <span id="rot-z-val" class="text-xs font-mono text-cyan-400">0°</span>
-                </div>
-                <input type="range" id="rot-z" min="-180" max="180" value="0" class="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer">
-            </div>
-        </div>
+        <!-- Scrollable Content -->
+        <div class="p-5 overflow-y-auto custom-scrollbar space-y-5">
 
-        <!-- Fading -->
-        <div class="control-group">
-            <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Edge Fading</h2>
-            
-            <div class="grid grid-cols-2 gap-4">
-                <label class="flex items-center space-x-2 cursor-pointer">
-                    <input type="checkbox" id="fade-top" class="form-checkbox h-4 w-4 text-cyan-500 rounded border-gray-700 bg-gray-800" checked>
-                    <span class="text-sm text-gray-300">Top</span>
-                </label>
-                <label class="flex items-center space-x-2 cursor-pointer">
-                    <input type="checkbox" id="fade-bottom" class="form-checkbox h-4 w-4 text-cyan-500 rounded border-gray-700 bg-gray-800" checked>
-                    <span class="text-sm text-gray-300">Bottom</span>
-                </label>
-                <label class="flex items-center space-x-2 cursor-pointer">
-                    <input type="checkbox" id="fade-left" class="form-checkbox h-4 w-4 text-cyan-500 rounded border-gray-700 bg-gray-800">
-                    <span class="text-sm text-gray-300">Left</span>
-                </label>
-                <label class="flex items-center space-x-2 cursor-pointer">
-                    <input type="checkbox" id="fade-right" class="form-checkbox h-4 w-4 text-cyan-500 rounded border-gray-700 bg-gray-800">
-                    <span class="text-sm text-gray-300">Right</span>
-                </label>
+            <!-- Colors -->
+            <div class="control-group">
+                <h2 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Appearance</h2>
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between bg-black/20 p-2 rounded-lg border border-white/5">
+                        <label class="text-xs text-gray-300 font-medium">Foreground</label>
+                        <div class="flex items-center gap-2">
+                            <span id="fg-hex" class="text-xs font-mono text-gray-500">#00ffff</span>
+                            <input type="color" id="fg-color" value="#00ffff"
+                                class="bg-transparent border-none w-6 h-6 p-0 cursor-pointer rounded overflow-hidden">
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between bg-black/20 p-2 rounded-lg border border-white/5">
+                        <label class="text-xs text-gray-300 font-medium">Background</label>
+                        <div class="flex items-center gap-2">
+                            <span id="bg-hex" class="text-xs font-mono text-gray-500">#051020</span>
+                            <input type="color" id="bg-color" value="#051020"
+                                class="bg-transparent border-none w-6 h-6 p-0 cursor-pointer rounded overflow-hidden">
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div class="mt-4">
-                <div class="flex justify-between mb-1">
-                    <label class="text-xs text-gray-300">Fade Strength</label>
-                    <span id="fade-str-val" class="text-xs font-mono text-cyan-400">0.5</span>
-                </div>
-                <input type="range" id="fade-strength" min="0.1" max="1.5" step="0.1" value="0.5" class="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer">
-            </div>
-        </div>
+            <!-- Pattern Settings -->
+            <div class="control-group">
+                <h2 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Grid Layout</h2>
 
-        <!-- Actions -->
-        <div class="mt-6 flex flex-col space-y-3">
-             <button id="reset-cam" class="w-full px-4 py-2 bg-gray-800 hover:bg-gray-700 text-xs font-semibold uppercase tracking-wider rounded border border-gray-600 transition-colors">Reset Camera</button>
-             <button id="export-svg" class="w-full px-4 py-3 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold uppercase tracking-wider rounded shadow-lg transition-all transform hover:scale-105 flex justify-center items-center">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                Export SVG
-             </button>
+                <div class="space-y-4">
+                    <div>
+                        <div class="flex justify-between mb-1.5">
+                            <label class="text-xs text-gray-300 font-medium">Density</label>
+                            <span id="density-val"
+                                class="text-xs font-mono text-cyan-400 bg-cyan-900/30 px-1.5 rounded">50</span>
+                        </div>
+                        <input type="range" id="density" min="10" max="100" value="50" class="w-full">
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between mb-1.5">
+                            <label class="text-xs text-gray-300 font-medium">Dot Size</label>
+                            <span id="size-val"
+                                class="text-xs font-mono text-cyan-400 bg-cyan-900/30 px-1.5 rounded">0.4</span>
+                        </div>
+                        <input type="range" id="dot-size" min="0.1" max="1.0" step="0.05" value="0.4" class="w-full">
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between mb-1.5">
+                            <label class="text-xs text-gray-300 font-medium">Curvature</label>
+                            <span id="curve-val"
+                                class="text-xs font-mono text-cyan-400 bg-cyan-900/30 px-1.5 rounded">0</span>
+                        </div>
+                        <input type="range" id="curvature" min="-5" max="5" step="0.1" value="0" class="w-full">
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between mb-1.5">
+                            <label class="text-xs text-gray-300 font-medium">Wave Effect</label>
+                            <span id="wave-val"
+                                class="text-xs font-mono text-cyan-400 bg-cyan-900/30 px-1.5 rounded">0</span>
+                        </div>
+                        <input type="range" id="wave" min="0" max="2" step="0.1" value="0" class="w-full">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rotation -->
+            <div class="control-group">
+                <h2 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Rotation</h2>
+
+                <div class="space-y-4">
+                    <div>
+                        <div class="flex justify-between mb-1.5">
+                            <label class="text-xs text-gray-300 font-medium">Rotate X</label>
+                            <span id="rot-x-val"
+                                class="text-xs font-mono text-cyan-400 bg-cyan-900/30 px-1.5 rounded">0°</span>
+                        </div>
+                        <input type="range" id="rot-x" min="-180" max="180" value="0" class="w-full">
+                    </div>
+                    <div>
+                        <div class="flex justify-between mb-1.5">
+                            <label class="text-xs text-gray-300 font-medium">Rotate Y</label>
+                            <span id="rot-y-val"
+                                class="text-xs font-mono text-cyan-400 bg-cyan-900/30 px-1.5 rounded">0°</span>
+                        </div>
+                        <input type="range" id="rot-y" min="-180" max="180" value="0" class="w-full">
+                    </div>
+                    <div>
+                        <div class="flex justify-between mb-1.5">
+                            <label class="text-xs text-gray-300 font-medium">Rotate Z</label>
+                            <span id="rot-z-val"
+                                class="text-xs font-mono text-cyan-400 bg-cyan-900/30 px-1.5 rounded">0°</span>
+                        </div>
+                        <input type="range" id="rot-z" min="-180" max="180" value="0" class="w-full">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fading -->
+            <div class="control-group">
+                <h2 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Edge Fading</h2>
+
+                <div class="grid grid-cols-2 gap-3 mb-4">
+                    <label
+                        class="flex items-center space-x-2 cursor-pointer p-2 rounded bg-white/5 hover:bg-white/10 transition">
+                        <input type="checkbox" id="fade-top" class="rounded border-gray-600 bg-gray-700" checked>
+                        <span class="text-xs text-gray-300 font-medium">Top</span>
+                    </label>
+                    <label
+                        class="flex items-center space-x-2 cursor-pointer p-2 rounded bg-white/5 hover:bg-white/10 transition">
+                        <input type="checkbox" id="fade-bottom" class="rounded border-gray-600 bg-gray-700" checked>
+                        <span class="text-xs text-gray-300 font-medium">Bottom</span>
+                    </label>
+                    <label
+                        class="flex items-center space-x-2 cursor-pointer p-2 rounded bg-white/5 hover:bg-white/10 transition">
+                        <input type="checkbox" id="fade-left" class="rounded border-gray-600 bg-gray-700">
+                        <span class="text-xs text-gray-300 font-medium">Left</span>
+                    </label>
+                    <label
+                        class="flex items-center space-x-2 cursor-pointer p-2 rounded bg-white/5 hover:bg-white/10 transition">
+                        <input type="checkbox" id="fade-right" class="rounded border-gray-600 bg-gray-700">
+                        <span class="text-xs text-gray-300 font-medium">Right</span>
+                    </label>
+                </div>
+
+                <div>
+                    <div class="flex justify-between mb-1.5">
+                        <label class="text-xs text-gray-300 font-medium">Fade Strength</label>
+                        <span id="fade-str-val"
+                            class="text-xs font-mono text-cyan-400 bg-cyan-900/30 px-1.5 rounded">0.5</span>
+                    </div>
+                    <input type="range" id="fade-strength" min="0.1" max="1.5" step="0.1" value="0.5" class="w-full">
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="pt-2 flex flex-col space-y-3">
+                <button id="reset-cam"
+                    class="w-full px-4 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white text-xs font-bold uppercase tracking-wider rounded-lg border border-gray-700 transition-colors flex items-center justify-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 16" />
+                        <path d="M3 5v11h11" />
+                    </svg>
+                    Reset Camera
+                </button>
+                <button id="export-svg"
+                    class="w-full px-4 py-3 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold uppercase tracking-wider rounded-lg shadow-lg shadow-cyan-900/30 transition-all transform hover:scale-[1.02] active:scale-95 flex justify-center items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" x2="12" y1="15" x2="12" y2="3" />
+                    </svg>
+                    Export SVG
+                </button>
+            </div>
         </div>
     </div>
 
-    <!-- Hidden UI Toggle Button (Shows when UI is hidden) -->
-    <button id="show-ui" class="absolute top-4 right-4 bg-gray-900/80 p-2 rounded-lg border border-gray-700 text-white hidden z-10">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    <!-- Show UI Button -->
+    <button id="show-ui"
+        class="fixed bottom-6 right-6 bg-gray-900 hover:bg-gray-800 text-white p-3 rounded-full shadow-2xl border border-gray-700 z-40 transition-all hover:scale-110 hidden group">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            class="group-hover:text-cyan-400 transition-colors">
+            <line x1="4" x2="20" y1="12" y2="12" />
+            <line x1="4" x2="20" y1="6" y2="6" />
+            <line x1="4" x2="20" y1="18" y2="18" />
+            <circle cx="15" cy="18" r="2" />
+            <circle cx="9" cy="6" r="2" />
         </svg>
     </button>
 
@@ -209,7 +351,7 @@
         // --- Lighting (Subtle) ---
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
         scene.add(ambientLight);
-        
+
         const dirLight = new THREE.DirectionalLight(0xffffff, 0.5);
         dirLight.position.set(10, 20, 10);
         scene.add(dirLight);
@@ -220,9 +362,9 @@
         const dummy = new THREE.Object3D();
         const geometry = new THREE.CylinderGeometry(1, 1, 0.1, 32);
         geometry.rotateX(Math.PI / 2); // Rotate to face camera by default
-        
+
         // Material
-        const material = new THREE.MeshBasicMaterial({ 
+        const material = new THREE.MeshBasicMaterial({
             color: config.fgColor,
             transparent: true // Needed if we want opacity fading, though we use scaling primarily
         });
@@ -236,16 +378,16 @@
             const count = config.density * config.density;
             mesh = new THREE.InstancedMesh(geometry, material, count);
             mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage); // Allow updates
-            
+
             // Apply initial rotation
             mesh.rotation.set(
-                THREE.Math.degToRad(config.rotX), 
-                THREE.Math.degToRad(config.rotY), 
+                THREE.Math.degToRad(config.rotX),
+                THREE.Math.degToRad(config.rotY),
                 THREE.Math.degToRad(config.rotZ)
             );
 
             scene.add(mesh);
-            
+
             updateDots();
         }
 
@@ -263,31 +405,31 @@
 
             for (let i = 0; i < size; i++) { // Y axis
                 for (let j = 0; j < size; j++) { // X axis
-                    
+
                     // Normalized coordinates (0 to 1)
                     const u = j / (size - 1);
                     const v = i / (size - 1); // 0 at bottom, 1 at top usually
-                    
+
                     // Position
                     const x = (j * separation) - offset;
                     const y = (i * separation) - offset;
-                    
+
                     // Curvature Logic (Bend along X or Y)
                     // Simple parabolic curve: z = k * x^2
                     // Normalized X from -1 to 1 for curvature calculation
                     const normX = (u * 2) - 1;
-                    const zCurve = (normX * normX) * -config.curvature * 5; 
+                    const zCurve = (normX * normX) * -config.curvature * 5;
 
                     // Wave Effect
                     const zWave = Math.sin(normX * Math.PI * 2 + time) * config.wave;
 
                     dummy.position.set(x, y, zCurve + zWave);
-                    
+
                     // Rotation (Follow curvature normal slightly)
                     dummy.rotation.set(0, 0, 0);
                     if (config.curvature !== 0) {
-                         // Very rough approximation of following the curve tangent
-                         dummy.rotation.y = normX * config.curvature * 0.5;
+                        // Very rough approximation of following the curve tangent
+                        dummy.rotation.y = normX * config.curvature * 0.5;
                     }
 
                     // Scale Calculation based on Fading
@@ -297,21 +439,21 @@
                     const fadeRamp = config.fadeStrength * 2; // Steeper ramp
 
                     if (config.fadeLeft) {
-                        scaleFactor *= Math.min(1, u * (1/config.fadeStrength)); 
+                        scaleFactor *= Math.min(1, u * (1 / config.fadeStrength));
                     }
                     if (config.fadeRight) {
-                        scaleFactor *= Math.min(1, (1 - u) * (1/config.fadeStrength));
+                        scaleFactor *= Math.min(1, (1 - u) * (1 / config.fadeStrength));
                     }
                     if (config.fadeBottom) {
-                        scaleFactor *= Math.min(1, v * (1/config.fadeStrength));
+                        scaleFactor *= Math.min(1, v * (1 / config.fadeStrength));
                     }
                     if (config.fadeTop) {
-                        scaleFactor *= Math.min(1, (1 - v) * (1/config.fadeStrength));
+                        scaleFactor *= Math.min(1, (1 - v) * (1 / config.fadeStrength));
                     }
 
                     // Apply Scale
                     dummy.scale.set(scaleFactor, scaleFactor, scaleFactor);
-                    
+
                     // Commit Instance
                     dummy.updateMatrix();
                     mesh.setMatrixAt(idx++, dummy.matrix);
@@ -324,7 +466,9 @@
         // --- UI Logic ---
         const uiElements = {
             fgColor: document.getElementById('fg-color'),
+            fgHex: document.getElementById('fg-hex'),
             bgColor: document.getElementById('bg-color'),
+            bgHex: document.getElementById('bg-hex'),
             density: document.getElementById('density'),
             densityVal: document.getElementById('density-val'),
             dotSize: document.getElementById('dot-size'),
@@ -355,11 +499,13 @@
         // Listeners
         uiElements.fgColor.addEventListener('input', (e) => {
             config.fgColor = e.target.value;
+            uiElements.fgHex.innerText = config.fgColor;
             material.color.set(config.fgColor);
         });
 
         uiElements.bgColor.addEventListener('input', (e) => {
             config.bgColor = e.target.value;
+            uiElements.bgHex.innerText = config.bgColor;
             scene.background.set(config.bgColor);
             scene.fog.color.set(config.bgColor);
         });
@@ -393,7 +539,7 @@
             config.rotX = parseFloat(uiElements.rotX.value);
             config.rotY = parseFloat(uiElements.rotY.value);
             config.rotZ = parseFloat(uiElements.rotZ.value);
-            
+
             uiElements.rotXVal.innerText = config.rotX + '°';
             uiElements.rotYVal.innerText = config.rotY + '°';
             uiElements.rotZVal.innerText = config.rotZ + '°';
@@ -435,10 +581,10 @@
         function downloadSVG() {
             const width = window.innerWidth;
             const height = window.innerHeight;
-            
+
             // SVG Header
             let svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" style="background-color: ${config.bgColor}">`;
-            
+
             const dots = [];
             const size = config.density;
             const separation = 1.2;
@@ -450,8 +596,8 @@
             const pos = new THREE.Vector3();
             const rotMatrix = new THREE.Matrix4();
             rotMatrix.makeRotationFromEuler(new THREE.Euler(
-                THREE.Math.degToRad(config.rotX), 
-                THREE.Math.degToRad(config.rotY), 
+                THREE.Math.degToRad(config.rotX),
+                THREE.Math.degToRad(config.rotY),
                 THREE.Math.degToRad(config.rotZ)
             ));
 
@@ -461,55 +607,55 @@
 
             for (let i = 0; i < size; i++) { // Y axis
                 for (let j = 0; j < size; j++) { // X axis
-                    
+
                     const u = j / (size - 1);
                     const v = i / (size - 1);
-                    
+
                     const x = (j * separation) - offset;
                     const y = (i * separation) - offset;
-                    
+
                     const normX = (u * 2) - 1;
-                    const zCurve = (normX * normX) * -config.curvature * 5; 
+                    const zCurve = (normX * normX) * -config.curvature * 5;
                     const zWave = Math.sin(normX * Math.PI * 2 + time) * config.wave;
 
                     // Calculate Scale Factor (same as updateDots)
                     let scaleFactor = config.dotSize;
-                    if (config.fadeLeft) scaleFactor *= Math.min(1, u * (1/config.fadeStrength)); 
-                    if (config.fadeRight) scaleFactor *= Math.min(1, (1 - u) * (1/config.fadeStrength));
-                    if (config.fadeBottom) scaleFactor *= Math.min(1, v * (1/config.fadeStrength));
-                    if (config.fadeTop) scaleFactor *= Math.min(1, (1 - v) * (1/config.fadeStrength));
+                    if (config.fadeLeft) scaleFactor *= Math.min(1, u * (1 / config.fadeStrength));
+                    if (config.fadeRight) scaleFactor *= Math.min(1, (1 - u) * (1 / config.fadeStrength));
+                    if (config.fadeBottom) scaleFactor *= Math.min(1, v * (1 / config.fadeStrength));
+                    if (config.fadeTop) scaleFactor *= Math.min(1, (1 - v) * (1 / config.fadeStrength));
 
-                     // 1. Local Position
-                     pos.set(x, y, zCurve + zWave);
-                     
-                     // 2. Apply Mesh Rotation (World Transform)
-                     pos.applyMatrix4(rotMatrix);
-                     
-                     // 3. Distance to camera (for sorting)
-                     const distSq = pos.distanceToSquared(camera.position);
-                     
-                     // 4. Calculate Screen Radius (Perspective)
-                     // Project position to get depth along camera view axis
-                     const vecToPoint = new THREE.Vector3().copy(pos).sub(camera.position);
-                     const depth = vecToPoint.dot(camDir);
-                     
-                     // Geometry radius is 1. Scaled by scaleFactor.
-                     const worldRadius = 1 * scaleFactor; 
-                     // Screen radius calculation based on perspective projection
-                     const scale = height / (2 * Math.tan(fov / 2) * depth);
-                     const screenR = worldRadius * scale;
+                    // 1. Local Position
+                    pos.set(x, y, zCurve + zWave);
 
-                     // 5. Project to Screen Coordinates
-                     pos.project(camera);
-                     
-                     // 6. Check visibility (simple NDC check + depth check)
-                     // Note: We include points slightly outside NDC because their radius might overlap screen
-                     if (depth > 0 && pos.z < 1 && pos.x >= -1.2 && pos.x <= 1.2 && pos.y >= -1.2 && pos.y <= 1.2) {
-                         
-                         const screenX = (pos.x * 0.5 + 0.5) * width;
-                         const screenY = (-(pos.y * 0.5) + 0.5) * height; // Invert Y for SVG
+                    // 2. Apply Mesh Rotation (World Transform)
+                    pos.applyMatrix4(rotMatrix);
 
-                         if (screenR > 0.5) { // Optimization: don't draw tiny invisible dots
+                    // 3. Distance to camera (for sorting)
+                    const distSq = pos.distanceToSquared(camera.position);
+
+                    // 4. Calculate Screen Radius (Perspective)
+                    // Project position to get depth along camera view axis
+                    const vecToPoint = new THREE.Vector3().copy(pos).sub(camera.position);
+                    const depth = vecToPoint.dot(camDir);
+
+                    // Geometry radius is 1. Scaled by scaleFactor.
+                    const worldRadius = 1 * scaleFactor;
+                    // Screen radius calculation based on perspective projection
+                    const scale = height / (2 * Math.tan(fov / 2) * depth);
+                    const screenR = worldRadius * scale;
+
+                    // 5. Project to Screen Coordinates
+                    pos.project(camera);
+
+                    // 6. Check visibility (simple NDC check + depth check)
+                    // Note: We include points slightly outside NDC because their radius might overlap screen
+                    if (depth > 0 && pos.z < 1 && pos.x >= -1.2 && pos.x <= 1.2 && pos.y >= -1.2 && pos.y <= 1.2) {
+
+                        const screenX = (pos.x * 0.5 + 0.5) * width;
+                        const screenY = (-(pos.y * 0.5) + 0.5) * height; // Invert Y for SVG
+
+                        if (screenR > 0.5) { // Optimization: don't draw tiny invisible dots
                             dots.push({
                                 x: screenX,
                                 y: screenY,
@@ -517,22 +663,22 @@
                                 dist: distSq,
                                 color: config.fgColor
                             });
-                         }
-                     }
+                        }
+                    }
                 }
             }
-            
+
             // Sort: Furthest first (Painter's algorithm)
             dots.sort((a, b) => b.dist - a.dist);
-            
+
             dots.forEach(dot => {
                 svgContent += `<circle cx="${dot.x.toFixed(2)}" cy="${dot.y.toFixed(2)}" r="${dot.r.toFixed(2)}" fill="${dot.color}" />`;
             });
-            
+
             svgContent += `</svg>`;
-            
+
             // Download
-            const blob = new Blob([svgContent], {type: 'image/svg+xml'});
+            const blob = new Blob([svgContent], { type: 'image/svg+xml' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
@@ -545,12 +691,12 @@
 
         // Toggle UI
         uiElements.toggleUi.addEventListener('click', () => {
-            uiElements.controls.classList.add('translate-x-[150%]');
+            uiElements.controls.classList.add('translate-x-[120%]', 'opacity-0', 'pointer-events-none');
             uiElements.showUi.classList.remove('hidden');
         });
 
         uiElements.showUi.addEventListener('click', () => {
-            uiElements.controls.classList.remove('translate-x-[150%]');
+            uiElements.controls.classList.remove('translate-x-[120%]', 'opacity-0', 'pointer-events-none');
             uiElements.showUi.classList.add('hidden');
         });
 
@@ -581,4 +727,5 @@
 
     </script>
 </body>
+
 </html>

@@ -1,22 +1,43 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ethereal Blobs</title>
-    
+
     <script src="https://cdn.tailwindcss.com"></script>
-    
+
     <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
-    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
-    
+    <script crossorigin
+        src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
 
     <style>
-        body { margin: 0; padding: 0; overflow: hidden; background-color: #0f172a; color: white; font-family: sans-serif; }
-        #error-log { position: fixed; top: 0; left: 0; width: 100%; background: #991b1b; color: white; padding: 20px; z-index: 9999; display: none; }
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #0f172a;
+            color: white;
+            font-family: sans-serif;
+        }
+
+        #error-log {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: #991b1b;
+            color: white;
+            padding: 20px;
+            z-index: 9999;
+            display: none;
+        }
     </style>
 </head>
+
 <body>
 
     <div id="error-log"></div>
@@ -24,7 +45,7 @@
 
     <script>
         // Global error handler to catch "blank screen" issues
-        window.onerror = function(message, source, lineno, colno, error) {
+        window.onerror = function (message, source, lineno, colno, error) {
             const errorDiv = document.getElementById('error-log');
             errorDiv.style.display = 'block';
             errorDiv.innerHTML = `<strong>Error:</strong> ${message}<br><small>${source}:${lineno}</small>`;
@@ -42,22 +63,22 @@
             </svg>
         );
 
-        const RefreshCw = (p) => <Icon {...p}><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 21H3v-5"/></Icon>;
-        const Sliders = (p) => <Icon {...p}><line x1="4" x2="4" y1="21" y2="14"/><line x1="4" x2="4" y1="10" y2="3"/><line x1="12" x2="12" y1="21" y2="12"/><line x1="12" x2="12" y1="8" y2="3"/><line x1="20" x2="20" y1="21" y2="16"/><line x1="20" x2="20" y1="12" y2="3"/><line x1="2" x2="6" y1="14" y2="14"/><line x1="10" x2="14" y1="8" y2="8"/><line x1="18" x2="22" y1="16" y2="16"/></Icon>;
-        const Copy = (p) => <Icon {...p}><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></Icon>;
-        const X = (p) => <Icon {...p}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></Icon>;
-        const Check = (p) => <Icon {...p}><polyline points="20 6 9 17 4 12"/></Icon>;
-        const Play = (p) => <Icon {...p}><polygon points="5 3 19 12 5 21 5 3"/></Icon>;
-        const Pause = (p) => <Icon {...p}><rect width="4" height="16" x="6" y="4"/><rect width="4" height="16" x="14" y="4"/></Icon>;
-        const Grid = (p) => <Icon {...p}><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><line x1="3" x2="21" y1="9" y2="9"/><line x1="3" x2="21" y1="15" y2="15"/><line x1="9" x2="9" y1="3" y2="21"/><line x1="15" x2="15" y1="3" y2="21"/></Icon>;
-        const Shuffle = (p) => <Icon {...p}><path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l10.6-10.6c.7-1 1.9-1.7 3.3-1.7H22"/><path d="m16 22 6-6-6-6"/><path d="M2 6h1.4c1.3 0 2.5.6 3.3 1.7l10.6 10.6c.7 1 1.9 1.7 3.3 1.7H22"/><path d="m16 2 6 6-6 6"/></Icon>;
-        const Eye = (p) => <Icon {...p}><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></Icon>;
-        const EyeOff = (p) => <Icon {...p}><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7c.44 0 .87-.03 1.28-.09"/><line x1="2" x2="22" y1="2" y2="22"/></Icon>;
+        const RefreshCw = (p) => <Icon {...p}><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /><path d="M8 21H3v-5" /></Icon>;
+        const Sliders = (p) => <Icon {...p}><line x1="4" x2="4" y1="21" y2="14" /><line x1="4" x2="4" y1="10" y2="3" /><line x1="12" x2="12" y1="21" y2="12" /><line x1="12" x2="12" y1="8" y2="3" /><line x1="20" x2="20" y1="21" y2="16" /><line x1="20" x2="20" y1="12" y2="3" /><line x1="2" x2="6" y1="14" y2="14" /><line x1="10" x2="14" y1="8" y2="8" /><line x1="18" x2="22" y1="16" y2="16" /></Icon>;
+        const Copy = (p) => <Icon {...p}><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></Icon>;
+        const X = (p) => <Icon {...p}><path d="M18 6 6 18" /><path d="m6 6 12 12" /></Icon>;
+        const Check = (p) => <Icon {...p}><polyline points="20 6 9 17 4 12" /></Icon>;
+        const Play = (p) => <Icon {...p}><polygon points="5 3 19 12 5 21 5 3" /></Icon>;
+        const Pause = (p) => <Icon {...p}><rect width="4" height="16" x="6" y="4" /><rect width="4" height="16" x="14" y="4" /></Icon>;
+        const Grid = (p) => <Icon {...p}><rect width="18" height="18" x="3" y="3" rx="2" ry="2" /><line x1="3" x2="21" y1="9" y2="9" /><line x1="3" x2="21" y1="15" y2="15" /><line x1="9" x2="9" y1="3" y2="21" /><line x1="15" x2="15" y1="3" y2="21" /></Icon>;
+        const Shuffle = (p) => <Icon {...p}><path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l10.6-10.6c.7-1 1.9-1.7 3.3-1.7H22" /><path d="m16 22 6-6-6-6" /><path d="M2 6h1.4c1.3 0 2.5.6 3.3 1.7l10.6 10.6c.7 1 1.9 1.7 3.3 1.7H22" /><path d="m16 2 6 6-6 6" /></Icon>;
+        const Eye = (p) => <Icon {...p}><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" /><circle cx="12" cy="12" r="3" /></Icon>;
+        const EyeOff = (p) => <Icon {...p}><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" /><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" /><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7c.44 0 .87-.03 1.28-.09" /><line x1="2" x2="22" y1="2" y2="22" /></Icon>;
 
         // --- UTILS ---
         const random = (min, max) => Math.random() * (max - min) + min;
-        const randomColor = () => '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
-        
+        const randomColor = () => '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+
         const interpolateColor = (color1, color2, factor) => {
             if (factor === undefined) factor = 0.5;
             // Basic hex interpolation
@@ -66,7 +87,7 @@
                 const c2 = color2.slice(1).match(/.{2}/g).map(x => parseInt(x, 16));
                 const result = c1.map((v, i) => Math.round(v + factor * (c2[i] - v)));
                 return `#${result.map(val => val.toString(16).padStart(2, '0')).join('')}`;
-            } catch(e) {
+            } catch (e) {
                 return color1; // Fallback to avoid crash
             }
         };
@@ -93,7 +114,7 @@
             const [overlaySeed, setOverlaySeed] = useState(12345);
             const [showControls, setShowControls] = useState(true);
             const [copied, setCopied] = useState(false);
-            
+
             const viewBoxSize = { w: 1000, h: 1000 };
 
             const blobs = useMemo(() => {
@@ -129,7 +150,7 @@
                 const type = types[Math.floor(range(0, types.length))];
                 const elements = [];
                 const strokeWidth = range(1, 3);
-                
+
                 if (type === 'grid') {
                     const spacing = range(40, 120);
                     for (let x = 0; x <= viewBoxSize.w; x += spacing) elements.push(<line key={`v${x}`} x1={x} y1={0} x2={x} y2={viewBoxSize.h} strokeWidth={strokeWidth} />);
@@ -161,7 +182,7 @@
                     const size = range(5, 15);
                     for (let x = 0; x <= viewBoxSize.w; x += spacing) {
                         for (let y = 0; y <= viewBoxSize.h; y += spacing) {
-                            elements.push(<g key={`c${x}${y}`} strokeWidth={strokeWidth}><line x1={x-size} y1={y} x2={x+size} y2={y} /><line x1={x} y1={y-size} x2={x} y2={y+size} /></g>);
+                            elements.push(<g key={`c${x}${y}`} strokeWidth={strokeWidth}><line x1={x - size} y1={y} x2={x + size} y2={y} /><line x1={x} y1={y - size} x2={x} y2={y + size} /></g>);
                         }
                     }
                 }
@@ -181,8 +202,32 @@
                 }
             };
 
+            useEffect(() => {
+                // Determine if we need to update the showControls state based on a prop or just default
+                // In this single file version, we just stick to internal state.
+            }, []);
+
             return (
                 <div className="relative w-full h-screen overflow-hidden font-sans transition-colors duration-500" style={{ backgroundColor: config.bgColor }}>
+                    <style>{`
+                        /* Custom Scrollbar */
+                        ::-webkit-scrollbar { width: 5px; }
+                        ::-webkit-scrollbar-track { background: transparent; }
+                        ::-webkit-scrollbar-thumb { background: #374151; border-radius: 2px; }
+                        ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+                        
+                        /* Range Input */
+                        input[type=range] { -webkit-appearance: none; background: transparent; }
+                        input[type=range]::-webkit-slider-thumb {
+                            -webkit-appearance: none; height: 14px; width: 14px; border-radius: 50%;
+                            background: #8b5cf6; cursor: pointer; margin-top: -5px;
+                            box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+                        }
+                        input[type=range]::-webkit-slider-runnable-track {
+                            width: 100%; height: 4px; cursor: pointer; background: #374151; border-radius: 2px;
+                        }
+                    `}</style>
+
                     <svg
                         id="generated-art-svg"
                         className="absolute inset-0 w-full h-full"
@@ -227,67 +272,119 @@
 
                     <div className="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-overlay" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }} />
 
-                    <button
-                        onClick={() => setShowControls(!showControls)}
-                        className={`absolute bottom-6 right-6 z-50 p-3 rounded-full shadow-lg transition-all duration-300 ${showControls ? 'bg-white/10 text-white backdrop-blur-md' : 'bg-white text-gray-900 hover:scale-110'}`}
-                    >
-                        {showControls ? <X size={24} /> : <Sliders size={24} />}
-                    </button>
 
-                    <div className={`absolute top-6 right-6 bottom-24 w-80 bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl text-white shadow-2xl overflow-y-auto transition-all duration-500 ease-in-out transform ${showControls ? 'translate-x-0 opacity-100' : 'translate-x-[120%] opacity-0 pointer-events-none'}`}>
-                        <div className="p-6 space-y-6">
-                            <div className="flex items-center justify-between">
-                                <h1 className="text-xl font-bold bg-gradient-to-r from-pink-500 to-violet-500 bg-clip-text text-transparent">Ethereal Blobs</h1>
-                                <div className="flex gap-2">
-                                    <button onClick={randomizeColors} className="p-2 hover:bg-white/10 rounded-lg transition-colors" title="Randomize Colors"><span className="text-xs font-bold px-1">RGB</span></button>
-                                    <button onClick={() => setSeed(Date.now())} className="p-2 hover:bg-white/10 rounded-lg transition-colors" title="Regenerate"><RefreshCw size={18} /></button>
-                                </div>
+                    {/* Controls Panel */}
+                    <div className={`fixed top-4 right-4 w-80 bg-gray-900/90 backdrop-blur-md border border-gray-700/50 rounded-xl shadow-2xl flex flex-col max-h-[calc(100vh-2rem)] transition-all duration-300 z-50 ${showControls ? 'translate-x-0 opacity-100' : 'translate-x-[120%] opacity-0 pointer-events-none'}`}>
+
+                        {/* Header */}
+                        <div className="px-5 py-4 border-b border-white/5 flex justify-between items-center bg-white/5">
+                            <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full bg-violet-500 shadow-[0_0_8px_rgba(139,92,246,0.6)]"></div>
+                                <h1 className="text-sm font-bold text-white tracking-wide uppercase">Ethereal Blobs</h1>
                             </div>
+                            <div className="flex items-center gap-1">
+                                <a href="dots.html" title="Previous: Dots" className="text-gray-400 hover:text-white transition-colors p-1 hover:bg-white/10 rounded flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
+                                </a>
+                                <a href="kineticflow.html" title="Next: Kinetic Flow" className="text-gray-400 hover:text-white transition-colors p-1 hover:bg-white/10 rounded flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg>
+                                </a>
+                                <div className="w-px h-4 bg-gray-700 mx-1"></div>
+                                <button onClick={() => setShowControls(false)} className="text-gray-400 hover:text-white transition-colors p-1 hover:bg-white/10 rounded">
+                                    <X size={16} />
+                                </button>
+                            </div>
+                        </div>
 
-                            <div className="space-y-3">
-                                <label className="text-xs font-semibold uppercase tracking-wider text-gray-400">Palette</label>
-                                <div className="grid grid-cols-3 gap-2">
+                        {/* Content */}
+                        <div className="p-5 overflow-y-auto custom-scrollbar space-y-5">
+
+                            {/* Palette */}
+                            <div>
+                                <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Palette</h2>
+                                <div className="space-y-2">
                                     {['bgColor', 'color1', 'color2'].map((k) => (
-                                        <div key={k} className="flex flex-col gap-1">
-                                            <input type="color" value={config[k]} onChange={(e) => handleChange(k, e.target.value)} className="w-full h-10 rounded cursor-pointer bg-transparent border-0 p-0" />
+                                        <div key={k} className="flex items-center justify-between bg-black/20 p-2 rounded-lg border border-white/5">
+                                            <label className="text-xs text-gray-300 font-medium capitalize">{k.replace('Color', ' Color').replace('1', ' 1').replace('2', ' 2').replace('bg', 'Background')}</label>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xs font-mono text-gray-500">{config[k]}</span>
+                                                <input type="color" value={config[k]} onChange={(e) => handleChange(k, e.target.value)} className="w-6 h-6 rounded cursor-pointer bg-transparent border-0 p-0" />
+                                            </div>
                                         </div>
                                     ))}
+                                    <div className="flex gap-2 pt-1">
+                                        <button onClick={randomizeColors} className="flex-1 py-1.5 bg-gray-800 hover:bg-gray-700 text-xs font-medium rounded-lg transition-colors border border-gray-700 text-gray-300">Random Colors</button>
+                                        <button onClick={() => setSeed(Date.now())} className="flex-1 py-1.5 bg-gray-800 hover:bg-gray-700 text-xs font-medium rounded-lg transition-colors border border-gray-700 text-gray-300 flex items-center justify-center gap-2"><RefreshCw size={12} /> Regenerate</button>
+                                    </div>
                                 </div>
                             </div>
-                            <hr className="border-white/10" />
 
-                            <div className="space-y-5">
-                                <div className="space-y-2"><div className="flex justify-between text-sm"><span>Blob Count</span><span className="text-gray-400">{config.blobCount}</span></div><input type="range" min="1" max="50" value={config.blobCount} onChange={(e) => handleChange('blobCount', parseInt(e.target.value))} className="w-full accent-violet-500 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer" /></div>
-                                <div className="space-y-2"><div className="flex justify-between text-sm"><span>Blur</span><span className="text-gray-400">{config.blurAmount}px</span></div><input type="range" min="0" max="150" value={config.blurAmount} onChange={(e) => handleChange('blurAmount', parseInt(e.target.value))} className="w-full accent-violet-500 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer" /></div>
-                                <div className="space-y-2"><div className="flex justify-between text-sm"><span>Opacity</span><span className="text-gray-400">{Math.round(config.opacity * 100)}%</span></div><input type="range" min="0.1" max="1" step="0.05" value={config.opacity} onChange={(e) => handleChange('opacity', parseFloat(e.target.value))} className="w-full accent-violet-500 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer" /></div>
-                                <div className="space-y-2"><div className="flex justify-between text-sm"><span>Max Size</span><span className="text-gray-400">{config.maxSize}%</span></div><input type="range" min="10" max="100" value={config.maxSize} onChange={(e) => handleChange('maxSize', parseInt(e.target.value))} className="w-full accent-violet-500 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer" /></div>
-                                <div className="space-y-2"><div className="flex justify-between text-sm"><span>Speed</span><span className="text-gray-400">{config.speed}s</span></div><input type="range" min="2" max="60" value={config.speed} onChange={(e) => handleChange('speed', parseInt(e.target.value))} className="w-full accent-violet-500 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer" /></div>
+                            {/* Properties */}
+                            <div>
+                                <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Properties</h2>
+                                <div className="space-y-4">
+                                    <div>
+                                        <div className="flex justify-between mb-1.5"><label className="text-xs text-gray-300 font-medium">Blob Count</label><span className="text-xs font-mono text-violet-400 bg-violet-900/30 px-1.5 rounded">{config.blobCount}</span></div>
+                                        <input type="range" min="1" max="50" value={config.blobCount} onChange={(e) => handleChange('blobCount', parseInt(e.target.value))} className="w-full" />
+                                    </div>
+                                    <div>
+                                        <div className="flex justify-between mb-1.5"><label className="text-xs text-gray-300 font-medium">Blur Radius</label><span className="text-xs font-mono text-violet-400 bg-violet-900/30 px-1.5 rounded">{config.blurAmount}px</span></div>
+                                        <input type="range" min="0" max="150" value={config.blurAmount} onChange={(e) => handleChange('blurAmount', parseInt(e.target.value))} className="w-full" />
+                                    </div>
+                                    <div>
+                                        <div className="flex justify-between mb-1.5"><label className="text-xs text-gray-300 font-medium">Opacity</label><span className="text-xs font-mono text-violet-400 bg-violet-900/30 px-1.5 rounded">{Math.round(config.opacity * 100)}%</span></div>
+                                        <input type="range" min="0.1" max="1" step="0.05" value={config.opacity} onChange={(e) => handleChange('opacity', parseFloat(e.target.value))} className="w-full" />
+                                    </div>
+                                    <div>
+                                        <div className="flex justify-between mb-1.5"><label className="text-xs text-gray-300 font-medium">Max Size</label><span className="text-xs font-mono text-violet-400 bg-violet-900/30 px-1.5 rounded">{config.maxSize}%</span></div>
+                                        <input type="range" min="10" max="100" value={config.maxSize} onChange={(e) => handleChange('maxSize', parseInt(e.target.value))} className="w-full" />
+                                    </div>
+                                    <div>
+                                        <div className="flex justify-between mb-1.5"><label className="text-xs text-gray-300 font-medium">Animation Speed</label><span className="text-xs font-mono text-violet-400 bg-violet-900/30 px-1.5 rounded">{config.speed}s</span></div>
+                                        <input type="range" min="2" max="60" value={config.speed} onChange={(e) => handleChange('speed', parseInt(e.target.value))} className="w-full" />
+                                    </div>
+                                </div>
                             </div>
-                            <hr className="border-white/10" />
 
-                            <div className="space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2"><Grid size={16} className="text-gray-400"/><span className="text-sm font-semibold uppercase tracking-wider text-gray-400">Overlay</span></div>
-                                    <button onClick={() => handleChange('overlayEnabled', !config.overlayEnabled)} className={`p-1.5 rounded-md transition-colors ${config.overlayEnabled ? 'bg-violet-600 text-white' : 'bg-gray-700 text-gray-400'}`}>{config.overlayEnabled ? <Eye size={16} /> : <EyeOff size={16} />}</button>
+                            {/* Overlay */}
+                            <div>
+                                <div className="flex items-center justify-between mb-3">
+                                    <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Overlay Texture</h2>
+                                    <button onClick={() => handleChange('overlayEnabled', !config.overlayEnabled)} className={`p-1 rounded transition-colors ${config.overlayEnabled ? 'text-violet-400' : 'text-gray-600'}`}>
+                                        {config.overlayEnabled ? <Eye size={14} /> : <EyeOff size={14} />}
+                                    </button>
                                 </div>
                                 {config.overlayEnabled && (
-                                    <div className="space-y-4">
+                                    <div className="space-y-4 p-3 bg-white/5 rounded-lg border border-white/5">
                                         <div className="flex items-center gap-3">
-                                            <button onClick={() => setOverlaySeed(Date.now())} className="flex items-center justify-between w-full bg-white/5 hover:bg-white/10 px-3 py-2 rounded-lg text-xs font-medium border border-white/5"><span>{overlayLayer ? overlayLayer.type.toUpperCase() : 'RANDOM'}</span><Shuffle size={14} className="text-violet-400" /></button>
-                                            <input type="color" value={config.overlayColor} onChange={(e) => handleChange('overlayColor', e.target.value)} className="w-24 h-[34px] rounded-lg cursor-pointer bg-white/5 border border-white/5 p-1" />
+                                            <button onClick={() => setOverlaySeed(Date.now())} className="flex-1 flex items-center justify-between bg-black/40 hover:bg-black/60 px-3 py-2 rounded text-xs font-medium border border-white/5 transition-colors"><span>{overlayLayer ? overlayLayer.type.toUpperCase() : 'RANDOM'}</span><Shuffle size={12} className="text-violet-400" /></button>
+                                            <input type="color" value={config.overlayColor} onChange={(e) => handleChange('overlayColor', e.target.value)} className="w-8 h-8 rounded cursor-pointer bg-transparent border-none p-0" />
                                         </div>
-                                        <div className="space-y-2"><input type="range" min="0.05" max="1" step="0.05" value={config.overlayOpacity} onChange={(e) => handleChange('overlayOpacity', parseFloat(e.target.value))} className="w-full accent-violet-500 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer" /></div>
+                                        <div>
+                                            <div className="flex justify-between mb-1.5"><label className="text-xs text-gray-400">Opacity</label><span className="text-xs font-mono text-gray-500">{Math.round(config.overlayOpacity * 100)}%</span></div>
+                                            <input type="range" min="0.05" max="1" step="0.05" value={config.overlayOpacity} onChange={(e) => handleChange('overlayOpacity', parseFloat(e.target.value))} className="w-full" />
+                                        </div>
                                     </div>
                                 )}
                             </div>
-                            <hr className="border-white/10" />
 
-                            <div className="flex flex-col gap-3">
-                                <button onClick={() => handleChange('animationEnabled', !config.animationEnabled)} className={`flex items-center justify-center gap-2 w-full py-2 rounded-lg font-medium transition-colors ${config.animationEnabled ? 'bg-white/10 hover:bg-white/20' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}>{config.animationEnabled ? <Pause size={16} /> : <Play size={16} />}{config.animationEnabled ? 'Pause' : 'Play'}</button>
-                                <button onClick={copySVG} className="flex items-center justify-center gap-2 w-full py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium transition-colors">{copied ? <Check size={16} /> : <Copy size={16} />}{copied ? 'Copied!' : 'Copy SVG'}</button>
+                            {/* Actions */}
+                            <div className="flex flex-col gap-3 pt-2">
+                                <button onClick={() => handleChange('animationEnabled', !config.animationEnabled)} className={`flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider border transition-colors ${config.animationEnabled ? 'bg-gray-800 border-gray-700 text-gray-300 hover:text-white' : 'bg-green-900/30 border-green-800 text-green-400'}`}>{config.animationEnabled ? <Pause size={14} /> : <Play size={14} />}{config.animationEnabled ? 'Pause Animation' : 'Play Animation'}</button>
+                                <button onClick={copySVG} className="flex items-center justify-center gap-2 w-full py-3 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-xs font-bold uppercase tracking-wider shadow-lg shadow-violet-900/30 transition-all transform hover:scale-[1.02] active:scale-95">{copied ? <Check size={16} /> : <Copy size={16} />}{copied ? 'Copied to Clipboard' : 'Copy SVG Code'}</button>
                             </div>
+
                         </div>
                     </div>
+
+                    {/* Show UI Button */}
+                    <button
+                        onClick={() => setShowControls(true)}
+                        className={`fixed bottom-6 right-6 bg-gray-900 hover:bg-gray-800 text-white p-3 rounded-full shadow-2xl border border-gray-700 z-40 transition-all hover:scale-110 group ${showControls ? 'hidden' : 'block'}`}
+                    >
+                        <Sliders size={24} className="group-hover:text-violet-400 transition-colors" />
+                    </button>
+
                 </div>
             );
         };
@@ -296,4 +393,5 @@
         root.render(<BlobGenerator />);
     </script>
 </body>
+
 </html>
