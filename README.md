@@ -4,4 +4,5 @@ A place for the i.AI team to host experiments in vibe coding simple design tools
 - [Ethereal blobs](https://i-dot-ai.github.io/design-tool-experiments/etherealblobs)
 - [Kinetic flow](https://i-dot-ai.github.io/design-tool-experiments/kineticflow)
 
-https://github.com/i-dot-ai/design-tool-experiments
+
+[Code available on Github](https://github.com/i-dot-ai/design-tool-experiments)
