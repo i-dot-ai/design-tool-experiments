@@ -1,6 +1,8 @@
 A place for the i.AI team to host experiments in vibe coding simple design tools.
 
 <img width="300" height="200" alt="Dots" src="https://github.com/user-attachments/assets/482c2c28-a4fd-4ece-a77c-49b0bb1293c2" />
+<img width="300" height="200" alt="image" src="https://github.com/user-attachments/assets/e6af4081-ddce-40c3-bbca-93d48dd08351" />
+
 
 
 - [Dots](https://i-dot-ai.github.io/design-tool-experiments/dots) 
