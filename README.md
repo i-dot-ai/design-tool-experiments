@@ -7,7 +7,7 @@ A place for the i.AI team to host experiments in vibe coding simple design tools
 
 
 
-- [Dots](https://i-dot-ai.github.io/design-tool-experiments/dots) 
+- [<img width="150" border="1" height="100" alt="Dots" src="https://github.com/user-attachments/assets/482c2c28-a4fd-4ece-a77c-49b0bb1293c2" /> Dots](https://i-dot-ai.github.io/design-tool-experiments/dots) 
 - [Ethereal blobs](https://i-dot-ai.github.io/design-tool-experiments/etherealblobs)
 - [Kinetic flow](https://i-dot-ai.github.io/design-tool-experiments/kineticflow)
 
