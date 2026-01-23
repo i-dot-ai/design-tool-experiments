@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Abstract Landscapes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom scrollbar for clean UI */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        
+        body {
+            background-color: #18181b; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* Prevent scrollbars */
+        }
+
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            background: #1e1b4b; 
+        }
+
+        #controls {
+            position: absolute;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 20;
+        }
+    </style>
+</head>
+<body class="h-screen w-full relative">
+
+    <!-- Controls Overlay -->
+    <div id="controls" class="flex gap-3">
+        <button id="btn-generate" class="flex items-center gap-2 px-6 py-3 bg-pink-600 hover:bg-pink-500 text-white rounded-full font-medium transition-all transform hover:scale-105 active:scale-95 shadow-xl border border-pink-500/50 backdrop-blur-md bg-opacity-90">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3"/></svg>
+            Refresh
+        </button>
+        <button id="btn-download" class="flex items-center gap-2 px-6 py-3 bg-gray-900/80 hover:bg-gray-800/90 text-white border border-gray-700/50 rounded-full font-medium transition-all shadow-xl hover:shadow-2xl backdrop-blur-md">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Save SVG
+        </button>
+    </div>
+
+    <!-- Full Screen Canvas -->
+    <div id="canvas-container">
+        <!-- The SVG will be injected here. preserveAspectRatio slice ensures it covers the whole screen -->
+        <svg id="main-svg" class="w-full h-full block" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <!-- Gradients will be injected here -->
+            </defs>
+            <!-- Paths will be injected here -->
+            <rect id="sky-rect" width="100%" height="100%" fill="url(#sky-gradient)" /> <!-- Sky Background -->
+        </svg>
+    </div>
+
+    <script>
+        // --- Configuration ---
+        const CONFIG = {
+            width: 1600,
+            height: 900,
+            minLayers: 4,
+            maxLayers: 8,
+        };
+
+        const svg = document.getElementById('main-svg');
+        const defs = svg.querySelector('defs');
+
+        // --- Utils: Random & Noise ---
+        
+        function getNoise(x, seed, amplitude = 1, frequency = 1) {
+            let y = 0;
+            // Smoother, more rolling hills for abstract look
+            y += Math.sin(x * frequency + seed) * amplitude;
+            y += Math.sin(x * frequency * 0.5 + seed * 2) * (amplitude * 1.5);
+            return y;
+        }
+
+        function randomRange(min, max) {
+            return Math.random() * (max - min) + min;
+        }
+
+        function randomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        // --- Logic: Colors (The Abstract Palette) ---
+
+        // Helper to interpolate between two numbers
+        function lerp(start, end, t) {
+            return start * (1 - t) + end * t;
+        }
+
+        function getLayerColor(layerIndex, totalLayers) {
+            const normalizedPos = layerIndex / (totalLayers - 1); // 0.0 (Back) to 1.0 (Front)
+
+            // Abstract Palette: Ethereal / High Key / Fading to White
+            
+            // Back Color (Distant Mountains): Fades into white sky
+            const startH = 200; // Hint of Cool Blue
+            const startS = 5;   // Very low saturation
+            const startL = 100; // Pure White
+
+            // Front Color (Near Hills): Pale Pastel Pink / Peach
+            const endH = 340;   // Pink range
+            const endS = 40;    // Soft, delicate saturation
+            const endL = 88;    // Very pale (High lightness)
+
+            // Hue interpolation 
+            const h = lerp(startH, endH, normalizedPos);
+            
+            // Saturation: Increases slightly as we get closer
+            const s = lerp(startS, endS, normalizedPos);
+            
+            // Lightness: Decreases slightly (from white to pale color) as we come forward
+            const l = lerp(startL, endL, normalizedPos);
+
+            // Add a bit of random variation
+            const noise = (Math.random() * 10) - 5; 
+
+            return {
+                h: h + noise,
+                s: s,
+                l: l,
+                css: `hsl(${h + noise}, ${s}%, ${l}%)`
+            };
+        }
+
+        function getPlaneColor(layerIndex, totalLayers) {
+            // Very pale accent colors
+            const palettes = [
+                { h: 170, s: 30, l: 90 }, // Pale Mint
+                { h: 45, s: 40, l: 92 },  // Pale Cream/Gold
+                { h: 320, s: 30, l: 90 }, // Pale Lavender
+                { h: 10, s: 40, l: 92 },  // Pale Blush
+                { h: 190, s: 30, l: 90 }, // Pale Ice Blue
+            ];
+            
+            const c = palettes[Math.floor(Math.random() * palettes.length)];
+            
+            // Adjust based on depth
+            const normalizedPos = layerIndex / (totalLayers - 1); 
+            // Keep it very light even in shadow
+            const depthFactor = 0.95 + (normalizedPos * 0.05); 
+
+            return `hsl(${c.h}, ${c.s}%, ${c.l * depthFactor}%)`;
+        }
+
+        function getLakeGradientColors(layerIndex, totalLayers) {
+            // Water reflects the white sky
+            const baseH = 280; // Soft Purple base
+            const baseS = 20;
+            const baseL = 90; 
+
+            // Gradient colors - very subtle
+            const colorTop = `hsl(${baseH}, ${baseS}%, 98%)`; // Almost white reflection
+            const colorBottom = `hsl(${baseH}, ${baseS + 10}%, 85%)`; // Slightly deeper
+
+            return { top: colorTop, bottom: colorBottom };
+        }
+
+        function createLakeGradient(id, colors) {
+            const grad = document.createElementNS("http://www.w3.org/2000/svg", "linearGradient");
+            grad.setAttribute("id", id);
+            grad.setAttribute("x1", "0%");
+            grad.setAttribute("y1", "0%");
+            grad.setAttribute("x2", "0%");
+            grad.setAttribute("y2", "100%");
+
+            const stop1 = document.createElementNS("http://www.w3.org/2000/svg", "stop");
+            stop1.setAttribute("offset", "0%");
+            stop1.setAttribute("stop-color", colors.top);
+            
+            const stop2 = document.createElementNS("http://www.w3.org/2000/svg", "stop");
+            stop2.setAttribute("offset", "100%");
+            stop2.setAttribute("stop-color", colors.bottom);
+
+            grad.appendChild(stop1);
+            grad.appendChild(stop2);
+            return grad;
+        }
+
+        // --- Logic: Shapes ---
+
+        function generateLayer(index, totalLayers, horizonY, scaleFactor = 1) {
+            const seed = Math.random() * 1000;
+            const points = [];
+            
+            const layerProgress = index / (totalLayers - 1); 
+            
+            const bottomY = CONFIG.height;
+            const yRange = bottomY - horizonY;
+            
+            // Overlap layers more for a dense look
+            const layerBaseY = horizonY + (yRange * (layerProgress * 0.7)) + 50;
+
+            // Smoother hills for abstract vibe
+            const amplitude = (50 + (Math.random() * 40)) * scaleFactor; 
+            const frequency = 0.0015 + (Math.random() * 0.002);
+            
+            const step = 20; 
+            for (let x = -100; x <= CONFIG.width + 100; x += step) {
+                let noiseVal = getNoise(x, seed, amplitude, frequency);
+                let y = layerBaseY - Math.abs(noiseVal);
+                
+                // Less ruggedness, more flow
+                if (layerProgress > 0.5) {
+                    y += getNoise(x, seed * 2, 10 * scaleFactor, 0.005); 
+                }
+
+                points.push(`${x},${y}`);
+            }
+
+            points.push(`${CONFIG.width + 100},${CONFIG.height + 200}`);
+            points.push(`-100,${CONFIG.height + 200}`);
+
+            return points.join(" ");
+        }
+
+        function createGradient(id, colorStop) {
+            const grad = document.createElementNS("http://www.w3.org/2000/svg", "linearGradient");
+            grad.setAttribute("id", id);
+            grad.setAttribute("x1", "0%");
+            grad.setAttribute("y1", "0%");
+            grad.setAttribute("x2", "0%");
+            grad.setAttribute("y2", "100%"); 
+
+            const stop1 = document.createElementNS("http://www.w3.org/2000/svg", "stop");
+            stop1.setAttribute("offset", "0%");
+            stop1.setAttribute("stop-color", colorStop.css);
+            
+            const stop2 = document.createElementNS("http://www.w3.org/2000/svg", "stop");
+            stop2.setAttribute("offset", "100%");
+            
+            // Shadow logic for pale colors:
+            // Don't make it black/dark. Just slightly darker and more saturated.
+            const shadowH = colorStop.h - 10; 
+            const shadowS = Math.min(100, colorStop.s + 10);
+            const shadowL = Math.max(0, colorStop.l - 10); // Only drop 10% lightness
+            
+            stop2.setAttribute("stop-color", `hsl(${shadowH}, ${shadowS}%, ${shadowL}%)`);
+
+            grad.appendChild(stop1);
+            grad.appendChild(stop2);
+            return grad;
+        }
+
+        function createSkyGradient() {
+            const grad = document.createElementNS("http://www.w3.org/2000/svg", "linearGradient");
+            grad.setAttribute("id", "sky-gradient");
+            grad.setAttribute("x1", "0%");
+            grad.setAttribute("y1", "0%");
+            grad.setAttribute("x2", "0%");
+            grad.setAttribute("y2", "100%");
+
+            // Grey Foggy Sky (Darker at top so white sun pops)
+            
+            const stop1 = document.createElementNS("http://www.w3.org/2000/svg", "stop");
+            stop1.setAttribute("offset", "0%");
+            stop1.setAttribute("stop-color", "#cbd5e1"); // Slate 300
+
+            const stop2 = document.createElementNS("http://www.w3.org/2000/svg", "stop");
+            stop2.setAttribute("offset", "100%");
+            stop2.setAttribute("stop-color", "#ffffff"); // Pure White
+
+            grad.appendChild(stop1);
+            grad.appendChild(stop2);
+
+            return grad;
+        }
+
+        // --- Sun/Moon Element ---
+        function addCelestialBody(svg) {
+            const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            // Random position in top third
+            const cx = randomRange(CONFIG.width * 0.2, CONFIG.width * 0.8);
+            const cy = randomRange(CONFIG.height * 0.1, CONFIG.height * 0.3);
+            const r = randomRange(40, 80);
+
+            circle.setAttribute("cx", cx);
+            circle.setAttribute("cy", cy);
+            circle.setAttribute("r", r);
+            circle.setAttribute("fill", "#ffffff"); // Pure white sun
+            circle.setAttribute("opacity", "0.6"); // Shining through fog
+            
+            // Optional: Glow
+            // Simply adding the circle before layers is enough for style
+            svg.appendChild(circle);
+        }
+
+        function drawScene() {
+            const content = svg.querySelectorAll('path, rect:not(#sky-rect), circle');
+            content.forEach(el => el.remove());
+
+            defs.innerHTML = ''; 
+            
+            defs.appendChild(createSkyGradient());
+            const skyRect = document.getElementById('sky-rect');
+            if(skyRect) skyRect.setAttribute("fill", "url(#sky-gradient)");
+
+            // Add Sun/Moon behind mountains
+            if (Math.random() > 0.3) {
+                addCelestialBody(svg);
+            }
+
+            const numLayers = randomInt(CONFIG.minLayers, CONFIG.maxLayers);
+            
+            const standardLandRatio = 0.45; // Higher mountains
+            const heightVariation = randomRange(0.6, 1.2); 
+            const actualLandRatio = standardLandRatio * heightVariation;
+            const horizonY = CONFIG.height * (1 - actualLandRatio);
+            
+            for (let i = 0; i < numLayers; i++) {
+                
+                // Chance for a flat plane (Field/Lake)
+                if (Math.random() < 0.35) { 
+                    const layerProgress = i / (numLayers - 1);
+                    const bottomY = CONFIG.height;
+                    const yRange = bottomY - horizonY;
+                    const hillBaseY = horizonY + (yRange * (layerProgress * 0.7)) + 50;
+                    
+                    const offset = (Math.random() * 40 + 20) * heightVariation;
+                    const planeY = hillBaseY - offset; 
+                    const planeHeight = CONFIG.height - planeY + 100;
+
+                    const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                    rect.setAttribute("x", "-100");
+                    rect.setAttribute("y", planeY);
+                    rect.setAttribute("width", CONFIG.width + 200);
+                    rect.setAttribute("height", planeHeight);
+                    
+                    if (Math.random() < 0.4) {
+                        const lakeColors = getLakeGradientColors(i, numLayers);
+                        const lakeGradId = `lake-grad-${i}-${Math.floor(Math.random()*1000)}`;
+                        const lakeGrad = createLakeGradient(lakeGradId, lakeColors);
+                        defs.appendChild(lakeGrad);
+                        rect.setAttribute("fill", `url(#${lakeGradId})`);
+                    } else {
+                        rect.setAttribute("fill", getPlaneColor(i, numLayers));
+                    }
+
+                    rect.setAttribute("stroke", "none");
+                    svg.appendChild(rect);
+                }
+
+                // Hill Layer
+                const colorObj = getLayerColor(i, numLayers);
+                const gradId = `grad-${i}`;
+                
+                const gradient = createGradient(gradId, colorObj);
+                defs.appendChild(gradient);
+
+                const pathData = generateLayer(i, numLayers, horizonY, heightVariation);
+
+                const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                path.setAttribute("d", `M ${pathData} Z`);
+                path.setAttribute("fill", `url(#${gradId})`);
+                path.setAttribute("stroke", "none");
+
+                svg.appendChild(path);
+            }
+        }
+
+        // --- Interaction ---
+        function downloadSVG() {
+            const svgData = new XMLSerializer().serializeToString(svg);
+            const blob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = "abstract-landscape.svg";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        document.getElementById('btn-generate').addEventListener('click', drawScene);
+        document.getElementById('btn-download').addEventListener('click', downloadSVG);
+        
+        drawScene();
+
+    </script>
+</body>
+</html>
