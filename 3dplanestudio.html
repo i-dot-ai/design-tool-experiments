@@ -161,11 +161,11 @@ function genTargets(){
 
 function getState(t,i,targets){
   const tgt=targets[i];
-  const startZ=s.startStacked?i*s.stackGap:0;
-  const endZ=s.endStacked?i*s.stackGap:0;
+  const startStackOffset=s.startStacked?i*s.stackGap:0;
+  const endStackOffset=s.endStacked?i*s.stackGap:0;
   
-  let startPos=s.startStacked?{x:0,y:0,z:startZ}:Object.assign(getPos(s.startPos),{z:0});
-  let endPos=s.returnToStart?startPos:(s.endStacked?{x:0,y:0,z:endZ}:Object.assign(getPos(s.endPos),{z:0}));
+  let startPos=s.startStacked?{x:0,y:0,z:startStackOffset}:Object.assign(getPos(s.startPos),{z:0});
+  let endPos=s.returnToStart?startPos:(s.endStacked?{x:0,y:0,z:endStackOffset}:Object.assign(getPos(s.endPos),{z:0}));
   
   const disp=Math.sin(t*Math.PI);
   const basePos={
@@ -237,19 +237,19 @@ function render(){
   wrapper.style.transformOrigin=`50% 50% ${centerZ}px`;
   
   let wrapperTransform='';
-  if(s.startStacked||s.endStacked){
+  if(s.startStacked||(!s.returnToStart&&s.endStacked)){
     const startP=getPos(s.startPos);
     const endP=s.returnToStart?startP:getPos(s.endPos);
     const x=startP.x+(endP.x-startP.x)*s.progress;
     const y=startP.y+(endP.y-startP.y)*s.progress;
     wrapperTransform=`translateX(${x}px) translateY(${y}px) `;
     
-    if(s.returnToStart&&s.startStacked){
+    if(s.returnToStart){
       wrapperTransform+=`rotateX(${s.startRotX}deg) rotateY(${s.startRotY}deg) rotateZ(${s.startRotZ}deg)`;
-    }else if(s.startStacked||s.endStacked){
-      const rx=s.startRotX*s.progress;
-      const ry=s.startRotY*s.progress;
-      const rz=s.startRotZ*s.progress;
+    }else{
+      const rx=s.startRotX+(0-s.startRotX)*s.progress;
+      const ry=s.startRotY+(0-s.startRotY)*s.progress;
+      const rz=s.startRotZ+(0-s.startRotZ)*s.progress;
       wrapperTransform+=`rotateX(${rx}deg) rotateY(${ry}deg) rotateZ(${rz}deg)`;
     }
   }
