@@ -6,6 +6,7 @@ A place for the i.AI team to host experiments in vibe coding simple design tools
 - [Ethereal blobs](https://i-dot-ai.github.io/design-tool-experiments/etherealblobs)
 - [Kinetic flow](https://i-dot-ai.github.io/design-tool-experiments/kineticflow)
 - [Vector hills](https://i-dot-ai.github.io/design-tool-experiments/vectorhills)
+- [3D plane animation studio](https://i-dot-ai.github.io/design-tool-experiments/3dplanestudio)
 
 ## Screenshots
 <img width="150" height="100" alt="Dots" src="https://github.com/user-attachments/assets/abbb4e53-5178-4a90-872d-b8fa00a4ffed" />
