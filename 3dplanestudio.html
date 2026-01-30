@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>3D Plane Animation</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,sans-serif;overflow:hidden;background:#f0f0f0;width:100vw;height:100vh}
+input[type="range"]{-webkit-appearance:none;width:100%;height:6px;border-radius:3px;background:#ddd;outline:none}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:#C50978;cursor:pointer;border:2px solid white;box-shadow:0 2px 4px rgba(0,0,0,0.2)}
+input[type="range"]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:#C50978;cursor:pointer;border:2px solid white;box-shadow:0 2px 4px rgba(0,0,0,0.2)}
+.toggle-btn{position:absolute;top:20px;right:20px;z-index:1001;width:44px;height:44px;background:#C50978;color:white;border:none;border-radius:50%;cursor:pointer;font-size:20px;box-shadow:0 2px 8px rgba(0,0,0,0.2);transition:transform 0.3s}
+.toggle-btn.hidden{transform:rotate(180deg)}
+.controls{position:absolute;top:16px;right:16px;width:270px;max-height:calc(100vh - 32px);background:rgba(248,248,248,0.95);padding:15px;overflow-y:auto;border-radius:8px;z-index:1000;transition:right 0.3s;box-shadow:-2px 0 10px rgba(0,0,0,0.1)}
+.controls.hidden{right:-286px}
+.section{margin-bottom:20px;padding-bottom:20px;border-bottom:2px solid #ddd}
+h2{font-size:16px;margin-bottom:15px}
+h3{font-size:14px;margin-bottom:10px;font-weight:bold}
+label{font-size:12px;display:block;margin:5px 0;font-weight:bold}
+.hint{font-size:10px;color:#666;margin-bottom:5px;font-weight:normal}
+input[type="number"],select{width:100%;padding:8px;margin-bottom:10px;font-size:14px;border:1px solid #ccc;border-radius:4px}
+button.primary{width:100%;padding:10px;background:#C50978;color:white;border:none;border-radius:4px;cursor:pointer;font-size:14px;font-weight:bold;margin-top:5px}
+button.primary:hover{background:#a00764}
+.grid{display:inline-grid;grid-template-columns:45px 45px 45px;gap:5px;margin-bottom:10px}
+.grid-btn{width:45px;height:45px;border:2px solid #ccc;background:white;cursor:pointer;border-radius:6px;padding:0}
+.grid-btn.active{border:3px solid #C50978;background:rgba(197,9,120,0.08)}
+.perspective{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;padding-bottom:76px}
+.container{position:relative;transform-style:preserve-3d;overflow:hidden;background:white;border:1px solid #ddd}
+.stack{position:absolute;width:100%;height:100%;transform-style:preserve-3d}
+.plane{position:absolute;transform-style:preserve-3d}
+.playback{position:fixed;bottom:16px;left:16px;right:16px;padding:12px 20px;background:rgba(255,255,255,0.95);border-radius:8px;box-shadow:0 -2px 10px rgba(0,0,0,0.1);display:flex;align-items:center;gap:15px;z-index:900;transition:right 0.3s}
+.playback.shifted{right:302px}
+.play-btn{padding:8px 16px;background:#C50978;color:white;border:none;border-radius:4px;cursor:pointer;font-size:13px;font-weight:bold}
+.play-btn:hover{background:#a00764}
+.progress{flex:1}
+.progress-text{font-family:monospace;font-size:13px;min-width:50px;text-align:right}
+</style>
+</head>
+<body>
+
+<button class="toggle-btn" id="toggleBtn">›</button>
+
+<div class="controls" id="controls">
+  <h2>Animation Controls</h2>
+  
+  <div class="section">
+    <h3>Basic Settings</h3>
+    <label>Number of Planes</label>
+    <input type="number" id="numPlanes" min="1" max="20" value="5">
+    
+    <label>Aspect Ratio</label>
+    <select id="aspectRatio">
+      <option value="16:9">16:9</option>
+      <option value="4:3" selected>4:3</option>
+      <option value="1:1">1:1</option>
+    </select>
+  </div>
+  
+  <div class="section">
+    <h3>Start Position</h3>
+    <div class="grid" id="startGrid"></div>
+    <label><input type="checkbox" id="startStacked" checked> Start Stacked</label>
+    <div id="startStackOpts">
+      <label>Stack Gap: <span id="stackGapVal">25</span>px</label>
+      <input type="range" id="stackGap" min="0" max="50" value="25">
+      <label>Rotation X: <span id="startRotXVal">45</span>°</label>
+      <input type="range" id="startRotX" min="-180" max="180" value="45">
+      <label>Rotation Y: <span id="startRotYVal">0</span>°</label>
+      <input type="range" id="startRotY" min="-180" max="180" value="0">
+      <label>Rotation Z: <span id="startRotZVal">45</span>°</label>
+      <input type="range" id="startRotZ" min="-180" max="180" value="45">
+    </div>
+  </div>
+  
+  <div class="section">
+    <h3>End Position</h3>
+    <label><input type="checkbox" id="returnToStart"> Return to Start</label>
+    <div id="endOpts">
+      <div class="grid" id="endGrid"></div>
+      <label><input type="checkbox" id="endStacked" checked> End Stacked</label>
+    </div>
+  </div>
+  
+  <div class="section">
+    <h3>Movement</h3>
+    <label>Variation: <span id="posVarVal">100</span>%</label>
+    <input type="range" id="posVar" min="0" max="150" value="100">
+    <label>Rotation: <span id="rotVarVal">50</span>%</label>
+    <input type="range" id="rotVar" min="0" max="100" value="50">
+  </div>
+  
+  <div class="section">
+    <h3>Playback</h3>
+    <label>Mode</label>
+    <select id="playbackMode">
+      <option value="back-and-forth">Back & Forth</option>
+      <option value="loop">Loop</option>
+      <option value="once">Once</option>
+    </select>
+    <label>Duration: <span id="speedVal">5</span>s</label>
+    <input type="range" id="speed" min="1" max="20" value="5" style="direction:rtl">
+  </div>
+</div>
+
+<div class="perspective" id="perspective">
+  <div class="container" id="container">
+    <div class="stack" id="stack"></div>
+  </div>
+</div>
+
+<div class="playback" id="playback">
+  <button class="play-btn" id="playBtn">Play</button>
+  <input type="range" class="progress" id="progress" min="0" max="1" step="0.001" value="0">
+  <span class="progress-text" id="progressText">0%</span>
+</div>
+
+<script>
+const s={showControls:true,numPlanes:5,colors:Array(20).fill('#C50978'),opacities:Array(20).fill(0.5),aspectRatio:'4:3',startStacked:true,stackGap:25,startRotX:45,startRotY:0,startRotZ:45,startPos:'top-left',returnToStart:false,endStacked:true,endPos:'bottom-right',rotVar:50,posVar:100,speed:5,mode:'back-and-forth',progress:0,playing:false,direction:1,seed:0,dim:{width:800,height:600}};
+
+let animId=null,lastTime=Date.now();
+
+const positions=[
+  ['top-left','top-center','top-right'],
+  ['center-left','center-center','center-right'],
+  ['bottom-left','bottom-center','bottom-right']
+];
+
+const posPercents={
+  'top-left':{x:15,y:15},'top-center':{x:50,y:15},'top-right':{x:85,y:15},
+  'center-left':{x:15,y:50},'center-center':{x:50,y:50},'center-right':{x:85,y:50},
+  'bottom-left':{x:15,y:85},'bottom-center':{x:50,y:85},'bottom-right':{x:85,y:85}
+};
+
+function rng(seed){const x=Math.sin(seed++)*10000;return x-Math.floor(x)}
+
+function getPos(name){
+  const w=s.dim.width,h=s.dim.height;
+  const p=posPercents[name]||posPercents['center-center'];
+  return{x:(p.x/100)*w-w/2,y:(p.y/100)*h-h/2};
+}
+
+function genTargets(){
+  return Array.from({length:s.numPlanes},(_, i)=>({
+    offset:{
+      x:(rng(s.seed+i*3)-0.5)*200,
+      y:(rng(s.seed+i*3+1)-0.5)*200,
+      z:(rng(s.seed+i*3+2)-0.5)*150
+    },
+    path:{
+      x:(rng(s.seed+i*3+50)-0.5)*300*(s.posVar/50),
+      y:(rng(s.seed+i*3+51)-0.5)*300*(s.posVar/50),
+      z:(rng(s.seed+i*3+52)-0.5)*200*(s.posVar/50)
+    },
+    rot:{
+      x:(rng(s.seed+i*3+100)-0.5)*720*(s.rotVar/50),
+      y:(rng(s.seed+i*3+101)-0.5)*720*(s.rotVar/50),
+      z:(rng(s.seed+i*3+102)-0.5)*720*(s.rotVar/50)
+    }
+  }));
+}
+
+function getState(t,i,targets){
+  const tgt=targets[i];
+  const startZ=s.startStacked?i*s.stackGap:0;
+  const endZ=s.endStacked?i*s.stackGap:0;
+  
+  let startPos=s.startStacked?{x:0,y:0,z:startZ}:Object.assign(getPos(s.startPos),{z:0});
+  let endPos=s.returnToStart?startPos:(s.endStacked?{x:0,y:0,z:endZ}:Object.assign(getPos(s.endPos),{z:0}));
+  
+  const disp=Math.sin(t*Math.PI);
+  const basePos={
+    x:startPos.x+(endPos.x-startPos.x)*t,
+    y:startPos.y+(endPos.y-startPos.y)*t,
+    z:startPos.z+(endPos.z-startPos.z)*t
+  };
+  
+  const pos={
+    x:basePos.x+tgt.path.x*disp,
+    y:basePos.y+tgt.path.y*disp,
+    z:basePos.z+tgt.path.z*disp
+  };
+  
+  const rot={
+    x:tgt.rot.x*disp,
+    y:tgt.rot.y*disp,
+    z:tgt.rot.z*disp
+  };
+  
+  return{pos,rot};
+}
+
+function setupGrid(id,val,cb){
+  const g=document.getElementById(id);
+  g.innerHTML='';
+  positions.forEach(row=>{
+    row.forEach(p=>{
+      const btn=document.createElement('button');
+      btn.className='grid-btn';
+      if(p===val)btn.classList.add('active');
+      btn.onclick=()=>{
+        g.querySelectorAll('.grid-btn').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        cb(p);
+      };
+      g.appendChild(btn);
+    });
+  });
+}
+
+function updateDim(){
+  const c=document.getElementById('container');
+  const [w,h]=s.aspectRatio.split(':').map(Number);
+  let width=800,height=800*h/w;
+  const maxH=window.innerHeight-120,maxW=window.innerWidth*0.9;
+  if(height>maxH){height=maxH;width=height*w/h}
+  if(width>maxW){width=maxW;height=width*h/w}
+  c.style.width=width+'px';
+  c.style.height=height+'px';
+  s.dim={width,height};
+  document.getElementById('perspective').style.perspective=(width*1.875)+'px';
+}
+
+function render(){
+  const targets=genTargets();
+  const wrapper=document.getElementById('stack');
+  wrapper.innerHTML='';
+  
+  let centerZ=0;
+  if(s.returnToStart){
+    centerZ=s.startStacked?(s.numPlanes-1)*s.stackGap/2:0;
+  }else{
+    const startCenterZ=s.startStacked?(s.numPlanes-1)*s.stackGap/2:0;
+    const endCenterZ=s.endStacked?(s.numPlanes-1)*s.stackGap/2:0;
+    centerZ=startCenterZ+(endCenterZ-startCenterZ)*s.progress;
+  }
+  
+  wrapper.style.transformOrigin=`50% 50% ${centerZ}px`;
+  
+  let wrapperTransform='';
+  if(s.startStacked||s.endStacked){
+    const startP=getPos(s.startPos);
+    const endP=s.returnToStart?startP:getPos(s.endPos);
+    const x=startP.x+(endP.x-startP.x)*s.progress;
+    const y=startP.y+(endP.y-startP.y)*s.progress;
+    wrapperTransform=`translateX(${x}px) translateY(${y}px) `;
+    
+    if(s.returnToStart&&s.startStacked){
+      wrapperTransform+=`rotateX(${s.startRotX}deg) rotateY(${s.startRotY}deg) rotateZ(${s.startRotZ}deg)`;
+    }else if(s.startStacked||s.endStacked){
+      const rx=s.startRotX*s.progress;
+      const ry=s.startRotY*s.progress;
+      const rz=s.startRotZ*s.progress;
+      wrapperTransform+=`rotateX(${rx}deg) rotateY(${ry}deg) rotateZ(${rz}deg)`;
+    }
+  }
+  wrapper.style.transform=wrapperTransform;
+  
+  for(let i=0;i<s.numPlanes;i++){
+    const state=getState(s.progress,i,targets);
+    const plane=document.createElement('div');
+    plane.className='plane';
+    const size=s.dim.width*0.1875;
+    plane.style.width=size+'px';
+    plane.style.height=size+'px';
+    plane.style.background=s.colors[i];
+    plane.style.opacity=s.opacities[i];
+    plane.style.left='50%';
+    plane.style.top='50%';
+    plane.style.marginLeft=(-size/2)+'px';
+    plane.style.marginTop=(-size/2)+'px';
+    plane.style.transform=`
+      translateX(${state.pos.x}px)
+      translateY(${state.pos.y}px)
+      translateZ(${state.pos.z}px)
+      rotateX(${state.rot.x}deg)
+      rotateY(${state.rot.y}deg)
+      rotateZ(${state.rot.z}deg)
+    `;
+    wrapper.appendChild(plane);
+  }
+}
+
+function animate(){
+  if(!s.playing)return;
+  
+  const now=Date.now();
+  const delta=now-lastTime;
+  lastTime=now;
+  
+  const progressDelta=(delta/(s.speed*1000))*s.direction;
+  let newProgress=s.progress+progressDelta;
+  
+  if(s.mode==='back-and-forth'){
+    if(newProgress>=1){newProgress=1;s.direction=-1}
+    else if(newProgress<=0){newProgress=0;s.direction=1}
+  }else if(s.mode==='loop'){
+    if(newProgress>=1)newProgress=0;
+    else if(newProgress<0)newProgress=0;
+  }else{
+    if(newProgress>=1){newProgress=1;s.playing=false}
+    else if(newProgress<0)newProgress=0;
+  }
+  
+  s.progress=newProgress;
+  document.getElementById('progress').value=newProgress;
+  document.getElementById('progressText').textContent=Math.round(newProgress*100)+'%';
+  render();
+  
+  if(s.playing)animId=requestAnimationFrame(animate);
+}
+
+// Init
+setupGrid('startGrid',s.startPos,v=>{s.startPos=v;render()});
+setupGrid('endGrid',s.endPos,v=>{s.endPos=v;render()});
+
+document.getElementById('toggleBtn').onclick=()=>{
+  s.showControls=!s.showControls;
+  document.getElementById('controls').classList.toggle('hidden');
+  document.getElementById('toggleBtn').classList.toggle('hidden');
+  document.getElementById('playback').classList.toggle('shifted');
+};
+
+document.getElementById('numPlanes').oninput=e=>{s.numPlanes=Number(e.target.value);render()};
+document.getElementById('aspectRatio').onchange=e=>{s.aspectRatio=e.target.value;updateDim();render()};
+document.getElementById('startStacked').onchange=e=>{s.startStacked=e.target.checked;render()};
+document.getElementById('stackGap').oninput=e=>{s.stackGap=Number(e.target.value);document.getElementById('stackGapVal').textContent=e.target.value;render()};
+document.getElementById('startRotX').oninput=e=>{s.startRotX=Number(e.target.value);document.getElementById('startRotXVal').textContent=e.target.value;render()};
+document.getElementById('startRotY').oninput=e=>{s.startRotY=Number(e.target.value);document.getElementById('startRotYVal').textContent=e.target.value;render()};
+document.getElementById('startRotZ').oninput=e=>{s.startRotZ=Number(e.target.value);document.getElementById('startRotZVal').textContent=e.target.value;render()};
+document.getElementById('returnToStart').onchange=e=>{s.returnToStart=e.target.checked;render()};
+document.getElementById('endStacked').onchange=e=>{s.endStacked=e.target.checked;render()};
+document.getElementById('posVar').oninput=e=>{s.posVar=Number(e.target.value);document.getElementById('posVarVal').textContent=e.target.value;render()};
+document.getElementById('rotVar').oninput=e=>{s.rotVar=Number(e.target.value);document.getElementById('rotVarVal').textContent=e.target.value;render()};
+document.getElementById('speed').oninput=e=>{s.speed=Number(e.target.value);document.getElementById('speedVal').textContent=e.target.value};
+document.getElementById('playbackMode').onchange=e=>{s.mode=e.target.value};
+
+document.getElementById('playBtn').onclick=()=>{
+  s.playing=!s.playing;
+  document.getElementById('playBtn').textContent=s.playing?'Pause':'Play';
+  if(s.playing){lastTime=Date.now();animate()}else if(animId){cancelAnimationFrame(animId)}
+};
+
+document.getElementById('progress').oninput=e=>{
+  s.playing=false;
+  document.getElementById('playBtn').textContent='Play';
+  s.progress=Number(e.target.value);
+  document.getElementById('progressText').textContent=Math.round(s.progress*100)+'%';
+  render();
+};
+
+window.onresize=()=>{updateDim();render()};
+
+updateDim();
+render();
+</script>
+</body>
+</html>
