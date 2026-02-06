@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monolith Clusters</title>
+    <!-- External Dependencies: Tailwind for UI, Three.js for 3D, and SVG extensions -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/Projector.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/SVGRenderer.js"></script>
+    <style>
+        body {
+            background-color: #f8f8f8;
+            margin: 0;
+            overflow: hidden;
+            user-select: none;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        }
+        canvas {
+            display: block;
+        }
+        .control-panel {
+            backdrop-filter: blur(12px);
+            background-color: rgba(255, 255, 255, 0.85);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease;
+        }
+        .control-panel.ui-hidden {
+            transform: translate(-50%, calc(100% + 2rem));
+            opacity: 0;
+            pointer-events: none;
+        }
+        input[type="range"] {
+            accent-color: #000;
+            cursor: pointer;
+        }
+        input[type="color"] {
+            -webkit-appearance: none;
+            border: none;
+            width: 24px;
+            height: 24px;
+            padding: 0;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+        input[type="color"]::-webkit-color-swatch {
+            border: 1px solid rgba(0,0,0,0.1);
+            border-radius: 4px;
+        }
+        #uiToggle {
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+<body class="flex flex-col h-screen">
+
+    <!-- Header / Branding -->
+    <div class="absolute top-6 left-6 z-10 pointer-events-none">
+        <h1 class="text-2xl font-bold tracking-tighter text-black uppercase">Monolith Clusters</h1>
+        <p class="text-[10px] text-gray-400 tracking-widest uppercase italic">Drag to rotate • Scroll to zoom</p>
+    </div>
+
+    <!-- Floating Toggle Button -->
+    <button id="uiToggle" class="absolute bottom-6 right-6 z-30 bg-black text-white px-4 py-2 rounded-full text-[10px] uppercase font-bold hover:bg-zinc-800 shadow-xl transition-all active:scale-95">
+        Hide UI
+    </button>
+
+    <!-- UI Controls -->
+    <div id="controlPanel" class="control-panel absolute bottom-8 left-1/2 -translate-x-1/2 z-10 p-6 rounded-2xl border border-black/5 shadow-2xl flex flex-col items-center gap-6 w-[90%] max-w-[950px]">
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 w-full text-black">
+            <div class="flex flex-col gap-1">
+                <div class="flex justify-between text-[10px] uppercase font-bold">
+                    <label>A</label>
+                    <span id="qtyVal">80</span>
+                </div>
+                <input type="range" id="boxCount" min="15" max="300" value="80" class="w-full">
+            </div>
+
+            <div class="flex flex-col gap-1">
+                <div class="flex justify-between text-[10px] uppercase font-bold">
+                    <label>B</label>
+                    <span id="varVal">7</span>
+                </div>
+                <input type="range" id="variation" min="1" max="10" step="1" value="7" class="w-full">
+            </div>
+
+            <div class="flex flex-col gap-1">
+                <div class="flex justify-between text-[10px] uppercase font-bold">
+                    <label>C</label>
+                    <span id="conVal">5</span>
+                </div>
+                <input type="range" id="contrast" min="1" max="10" step="1" value="5" class="w-full">
+            </div>
+        </div>
+
+        <div class="flex flex-wrap gap-6 w-full justify-center items-center border-t border-black/5 pt-4">
+            
+            <!-- Color Pickers -->
+            <div class="flex items-center gap-4 border-r border-black/10 pr-6 mr-2">
+                <div class="flex flex-col items-center gap-1">
+                    <label class="text-[8px] uppercase font-bold opacity-50">Primary</label>
+                    <input type="color" id="keyLightColor" value="#ffffff">
+                </div>
+                <div class="flex flex-col items-center gap-1">
+                    <label class="text-[8px] uppercase font-bold opacity-50">Accent</label>
+                    <input type="color" id="fillLightColor" value="#ffffff">
+                </div>
+            </div>
+
+            <div class="flex gap-4">
+                <button id="refreshBtn" class="bg-black text-white px-8 py-2 rounded-full text-xs uppercase font-bold hover:bg-zinc-800 transition-colors active:scale-95">
+                    Regenerate
+                </button>
+                <button id="exportSvgBtn" class="border border-zinc-300 px-6 py-2 rounded-full text-xs uppercase font-bold hover:bg-black hover:text-white transition-all flex items-center gap-2">
+                    <span>Export SVG</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Container for Three.js Canvas -->
+    <div id="canvas-container" class="w-full h-full"></div>
+
+    <script>
+        /**
+         * Global Three.js variables
+         */
+        let scene, camera, renderer, group;
+        let keyLight, fillLight;
+        let isDragging = false;
+        let previousMousePosition = { x: 0, y: 0 };
+        let targetRotation = { x: 0.5, y: 0.5 };
+        let currentRotation = { x: 0.5, y: 0.5 };
+        
+        // UI Elements
+        const boxCountInput = document.getElementById('boxCount');
+        const variationInput = document.getElementById('variation');
+        const contrastInput = document.getElementById('contrast');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const exportSvgBtn = document.getElementById('exportSvgBtn');
+        const keyColorInput = document.getElementById('keyLightColor');
+        const fillColorInput = document.getElementById('fillLightColor');
+        const uiToggle = document.getElementById('uiToggle');
+        const controlPanel = document.getElementById('controlPanel');
+        
+        const qtyDisplay = document.getElementById('qtyVal');
+        const varDisplay = document.getElementById('varVal');
+        const conDisplay = document.getElementById('conVal');
+
+        let rects = [];
+        let baseUnit = 20;
+        let uiHidden = false;
+
+        /**
+         * Initialize the 3D Scene
+         */
+        function initThree() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xf8f8f8);
+
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 10000);
+            camera.position.z = 1200;
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+            scene.add(ambientLight);
+
+            keyLight = new THREE.DirectionalLight(0xffffff, 0.6);
+            keyLight.position.set(500, 1000, 500);
+            scene.add(keyLight);
+
+            fillLight = new THREE.DirectionalLight(0xffffff, 0.3);
+            fillLight.position.set(-500, 200, 200);
+            scene.add(fillLight);
+
+            group = new THREE.Group();
+            scene.add(group);
+
+            // Interaction Listeners
+            window.addEventListener('mousedown', (e) => isDragging = true);
+            window.addEventListener('mouseup', (e) => isDragging = false);
+            window.addEventListener('mousemove', (e) => {
+                if (isDragging) {
+                    const deltaMove = {
+                        x: e.offsetX - previousMousePosition.x,
+                        y: e.offsetY - previousMousePosition.y
+                    };
+                    targetRotation.y += deltaMove.x * 0.01;
+                    targetRotation.x += deltaMove.y * 0.01;
+                }
+                previousMousePosition = { x: e.offsetX, y: e.offsetY };
+            });
+
+            window.addEventListener('wheel', (e) => {
+                camera.position.z += e.deltaY * 0.5;
+                camera.position.z = Math.min(Math.max(camera.position.z, 200), 3000);
+            });
+
+            window.addEventListener('resize', onWindowResize);
+            animate();
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        /**
+         * Core Algorithm: Recursive Non-Square Subdivision
+         */
+        function subdivide(r, complexity, variation, contrast, currentDepth) {
+            const rectCenterX = r.x + r.w / 2;
+            const rectCenterY = r.y + r.h / 2;
+            const dx = rectCenterX / 400;
+            const dy = rectCenterY / 400;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            const areaUnits = (r.w / baseUnit) * (r.h / baseUnit);
+            const stopEarlyChance = 0.05 + (contrast * 0.04);
+            const shouldStop = areaUnits <= 1 || rects.length >= complexity || (currentDepth > 2 && Math.random() < stopEarlyChance);
+
+            if (shouldStop) {
+                const existenceChance = Math.pow(Math.max(0, 1.25 - dist), 1.8);
+                if (Math.random() < existenceChance || dist < 0.2) {
+                    rects.push(r);
+                }
+                return;
+            }
+
+            let splitVertical = r.w > r.h;
+            if (Math.random() < 0.1) splitVertical = !splitVertical;
+            const dim = splitVertical ? r.w : r.h;
+            const units = Math.floor(dim / baseUnit);
+
+            if (units <= 1) {
+                rects.push(r);
+                return;
+            }
+
+            let splitIndex;
+            const possibleSplits = [];
+            for (let i = 1; i < units; i++) {
+                if (variation > 3 && i === Math.floor(units / 2) && units > 2) continue;
+                possibleSplits.push(i);
+            }
+            
+            if (possibleSplits.length === 0) {
+                splitIndex = Math.floor(units / 2);
+            } else {
+                if (Math.random() < (variation / 15)) {
+                    splitIndex = Math.random() > 0.5 ? possibleSplits[0] : possibleSplits[possibleSplits.length - 1];
+                } else {
+                    splitIndex = possibleSplits[Math.floor(Math.random() * possibleSplits.length)];
+                }
+            }
+
+            const splitPos = splitIndex * baseUnit;
+
+            if (splitVertical) {
+                subdivide({x: r.x, y: r.y, w: splitPos, h: r.h}, complexity, variation, contrast, currentDepth + 1);
+                subdivide({x: r.x + splitPos, y: r.y, w: r.w - splitPos, h: r.h}, complexity, variation, contrast, currentDepth + 1);
+            } else {
+                subdivide({x: r.x, y: r.y, w: r.w, h: splitPos}, complexity, variation, contrast, currentDepth + 1);
+                subdivide({x: r.x, y: r.y + splitPos, w: r.w, h: r.h - splitPos}, complexity, variation, contrast, currentDepth + 1);
+            }
+        }
+
+        /**
+         * Regenerate the cluster and update the 3D scene
+         */
+        function generate() {
+            const complexity = parseInt(boxCountInput.value);
+            const variation = parseInt(variationInput.value);
+            const contrast = parseInt(contrastInput.value);
+            
+            qtyDisplay.innerText = complexity;
+            varDisplay.innerText = variation;
+            conDisplay.innerText = contrast;
+
+            baseUnit = 20; 
+
+            // Clear current objects
+            while(group.children.length > 0){ 
+                group.remove(group.children[0]); 
+            }
+
+            let attempts = 0;
+            const masterDim = 800;
+            const startRect = { x: -masterDim/2, y: -masterDim/2, w: masterDim, h: masterDim };
+
+            do {
+                rects = [];
+                subdivide(startRect, complexity, variation, contrast, 0);
+                attempts++;
+            } while (rects.length < 10 && attempts < 20);
+
+            // Create geometry for each block
+            const edgeMaterial = new THREE.LineBasicMaterial({ color: 0x000000 });
+            const faceMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0xeeeeee,
+                roughness: 0.8,
+                metalness: 0.1
+            });
+
+            rects.forEach(r => {
+                const depthUnits = Math.ceil(Math.random() * (contrast + 1));
+                const depth = depthUnits * baseUnit;
+
+                const geometry = new THREE.BoxGeometry(r.w, r.h, depth);
+                const mesh = new THREE.Mesh(geometry, faceMaterial);
+                
+                mesh.position.set(r.x + r.w / 2, r.y + r.h / 2, depth / 2);
+                
+                const edges = new THREE.EdgesGeometry(geometry);
+                const line = new THREE.LineSegments(edges, edgeMaterial);
+                mesh.add(line);
+
+                group.add(mesh);
+            });
+        }
+
+        /**
+         * Update the lighting based on color pickers
+         */
+        function updateLightColors() {
+            keyLight.color.set(keyColorInput.value);
+            fillLight.color.set(fillColorInput.value);
+        }
+
+        /**
+         * Export current 3D perspective as an SVG
+         */
+        function exportToSVG() {
+            const svgRenderer = new THREE.SVGRenderer();
+            svgRenderer.setSize(window.innerWidth, window.innerHeight);
+            
+            svgRenderer.render(scene, camera);
+            
+            const XMLSerializer = window.XMLSerializer || (function() {
+                return { serializeToString: (node) => node.outerHTML };
+            })();
+            
+            const serializer = new XMLSerializer();
+            let svgData = serializer.serializeToString(svgRenderer.domElement);
+            
+            if (!svgData.match(/^<svg[^>]+xmlns="http\:\/\/www\.w3\.org\/2000\/svg"/)) {
+                svgData = svgData.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+            }
+            svgData = '<?xml version="1.0" standalone="no"?>\n' + svgData;
+
+            const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `monolith-cluster-${Date.now()}.svg`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        /**
+         * Animation Loop
+         */
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Smooth damping for rotation
+            currentRotation.x += (targetRotation.x - currentRotation.x) * 0.1;
+            currentRotation.y += (targetRotation.y - currentRotation.y) * 0.1;
+
+            group.rotation.x = currentRotation.x;
+            group.rotation.y = currentRotation.y;
+
+            renderer.render(scene, camera);
+        }
+
+        // UI Event Listeners
+        uiToggle.addEventListener('click', () => {
+            uiHidden = !uiHidden;
+            if (uiHidden) {
+                controlPanel.classList.add('ui-hidden');
+                uiToggle.innerText = "Show UI";
+            } else {
+                controlPanel.classList.remove('ui-hidden');
+                uiToggle.innerText = "Hide UI";
+            }
+        });
+
+        boxCountInput.addEventListener('input', generate);
+        variationInput.addEventListener('input', generate);
+        contrastInput.addEventListener('input', generate);
+        refreshBtn.addEventListener('click', generate);
+        exportSvgBtn.addEventListener('click', exportToSVG);
+        
+        keyColorInput.addEventListener('input', updateLightColors);
+        fillColorInput.addEventListener('input', updateLightColors);
+
+        // Bootstrap
+        window.onload = () => {
+            initThree();
+            generate();
+            updateLightColors(); 
+        };
+
+    </script>
+</body>
+</html>
