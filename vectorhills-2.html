@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vector hills</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom scrollbar for clean UI */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        body {
+            background-color: #18181b;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            /* Prevent scrollbars */
+            cursor: pointer;
+            /* Indicate clickability */
+        }
+
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            background: #1e1b4b;
+        }
+
+        #controls {
+            position: absolute;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 20;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            pointer-events: none;
+            /* Ignore clicks when invisible */
+        }
+
+        #controls.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        #instruction-toast {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 30;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 9999px;
+            font-size: 1.25rem;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 1s ease;
+        }
+
+        #instruction-toast.visible {
+            opacity: 1;
+        }
+    </style>
+</head>
+
+<body class="h-screen w-full relative">
+
+    <!-- Instruction Toast -->
+    <div id="instruction-toast">Click or tap to generate a new scene</div>
+
+    <!-- Controls Overlay -->
+    <div id="controls" class="flex gap-3">
+        <button id="btn-download"
+            class="flex items-center gap-2 px-6 py-3 bg-gray-900/80 hover:bg-gray-800/90 text-white border border-gray-700/50 rounded-full font-medium transition-all shadow-xl hover:shadow-2xl backdrop-blur-md">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Save SVG
+        </button>
+    </div>
+
+    <!-- Full Screen Canvas -->
+    <div id="canvas-container">
+        <!-- The SVG will be injected here. preserveAspectRatio slice ensures it covers the whole screen -->
+        <svg id="main-svg" class="w-full h-full block" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice"
+            xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <!-- Gradients will be injected here -->
+            </defs>
+            <!-- Paths will be injected here -->
+            <rect id="sky-rect" width="100%" height="100%" fill="url(#sky-gradient)" /> <!-- Sky Background -->
+        </svg>
+    </div>
+
+    <script>
+        // --- Configuration ---
+        const CONFIG = {
+            width: 1600,
+            height: 900,
+            minLayers: 4,
+            maxLayers: 8,
+            fov: 1200,
+        };
+
+        const svg = document.getElementById('main-svg');
+        const defs = svg.querySelector('defs');
+        const canvasContainer = document.getElementById('canvas-container');
+
+        // --- State ---
+        let worldData = null;
+        let camera = { yaw: 0, pitch: 0 };
+        let input = { yawSpeed: 0, pitchSpeed: 0 };
+        let renderLoopId;
+
+        // --- Utils: Random & Noise ---
+
+        function getNoise(x, seed, amplitude = 1, frequency = 1) {
+            let y = 0;
+            // Smoother, more rolling hills for abstract look
+            y += Math.sin(x * frequency + seed) * amplitude;
+            y += Math.sin(x * frequency * 0.5 + seed * 2) * (amplitude * 1.5);
+            return y;
+        }
+
+        function randomRange(min, max) {
+            return Math.random() * (max - min) + min;
+        }
+
+        function randomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function lerp(start, end, t) {
+            return start * (1 - t) + end * t;
+        }
+
+        // --- Logic: Colors ---
+
+        function getLayerColor(layerIndex, totalLayers) {
+            const normalizedPos = layerIndex / (totalLayers - 1);
+
+            // Distant Mountains
+            const startH = 200;
+            const startS = 5;
+            const startL = 100;
+
+            // Front Hills
+            const endH = 340;
+            const endS = 40;
+            const endL = 88;
+
+            const h = lerp(startH, endH, normalizedPos);
+            const s = lerp(startS, endS, normalizedPos);
+            const l = lerp(startL, endL, normalizedPos);
+
+            return { h, s, l, css: `hsl(${h}, ${s}%, ${l}%)` };
+        }
+
+        function getPlaneColor(layerIndex, totalLayers) {
+            const palettes = [
+                { h: 170, s: 30, l: 90 }, // Pale Mint
+                { h: 45, s: 40, l: 92 },  // Pale Cream/Gold
+                { h: 320, s: 30, l: 90 }, // Pale Lavender
+                { h: 10, s: 40, l: 92 },  // Pale Blush
+                { h: 190, s: 30, l: 90 }, // Pale Ice Blue
+            ];
+            const c = palettes[Math.floor(Math.random() * palettes.length)];
+            const normalizedPos = layerIndex / (totalLayers - 1);
+            const depthFactor = 0.95 + (normalizedPos * 0.05);
+            return `hsl(${c.h}, ${c.s}%, ${c.l * depthFactor}%)`;
+        }
+
+        function getLakeGradientColors(layerIndex, totalLayers) {
+            const baseH = 280;
+            const baseS = 20;
+            const colorTop = `hsl(${baseH}, ${baseS}%, 98%)`;
+            const colorBottom = `hsl(${baseH}, ${baseS + 10}%, 85%)`;
+            return { top: colorTop, bottom: colorBottom };
+        }
+
+        // --- Gradient Creators ---
+        function createGradient(id, colorStop) {
+            const grad = document.createElementNS("http://www.w3.org/2000/svg", "linearGradient");
+            grad.setAttribute("id", id);
+            grad.setAttribute("x1", "0%");
+            grad.setAttribute("y1", "0%");
+            grad.setAttribute("x2", "0%");
+            grad.setAttribute("y2", "100%");
+            const stop1 = document.createElementNS("http://www.w3.org/2000/svg", "stop");
+            stop1.setAttribute("offset", "0%");
+            stop1.setAttribute("stop-color", colorStop.css);
+            const stop2 = document.createElementNS("http://www.w3.org/2000/svg", "stop");
+            stop2.setAttribute("offset", "100%");
+            const shadowH = colorStop.h - 10;
+            const shadowS = Math.min(100, colorStop.s + 10);
+            const shadowL = Math.max(0, colorStop.l - 10);
+            stop2.setAttribute("stop-color", `hsl(${shadowH}, ${shadowS}%, ${shadowL}%)`);
+            grad.appendChild(stop1);
+            grad.appendChild(stop2);
+            return grad;
+        }
+
+        function createLakeGradient(id, colors) {
+            const grad = document.createElementNS("http://www.w3.org/2000/svg", "linearGradient");
+            grad.setAttribute("id", id);
+            grad.setAttribute("x1", "0%");
+            grad.setAttribute("y1", "0%");
+            grad.setAttribute("x2", "0%");
+            grad.setAttribute("y2", "100%");
+            const stop1 = document.createElementNS("http://www.w3.org/2000/svg", "stop");
+            stop1.setAttribute("offset", "0%");
+            stop1.setAttribute("stop-color", colors.top);
+            const stop2 = document.createElementNS("http://www.w3.org/2000/svg", "stop");
+            stop2.setAttribute("offset", "100%");
+            stop2.setAttribute("stop-color", colors.bottom);
+            grad.appendChild(stop1);
+            grad.appendChild(stop2);
+            return grad;
+        }
+
+        function createSkyGradient() {
+            const grad = document.createElementNS("http://www.w3.org/2000/svg", "linearGradient");
+            grad.setAttribute("id", "sky-gradient");
+            grad.setAttribute("x1", "0%");
+            grad.setAttribute("y1", "0%");
+            grad.setAttribute("x2", "0%");
+            grad.setAttribute("y2", "100%");
+            const stop1 = document.createElementNS("http://www.w3.org/2000/svg", "stop");
+            stop1.setAttribute("offset", "0%");
+            stop1.setAttribute("stop-color", "#cbd5e1");
+            const stop2 = document.createElementNS("http://www.w3.org/2000/svg", "stop");
+            stop2.setAttribute("offset", "100%");
+            stop2.setAttribute("stop-color", "#ffffff");
+            grad.appendChild(stop1);
+            grad.appendChild(stop2);
+            return grad;
+        }
+
+        // --- Generation Logic (Data Only) ---
+
+        function generateWorldData() {
+            const numLayers = randomInt(CONFIG.minLayers, CONFIG.maxLayers);
+            const standardLandRatio = 0.45;
+            const globalHeightVariation = randomRange(0.6, 1.2);
+            const actualLandRatio = standardLandRatio * globalHeightVariation;
+            const horizonY = CONFIG.height * (1 - actualLandRatio);
+
+            const layers = [];
+
+            for (let i = 0; i < numLayers; i++) {
+                const layerProgress = i / (numLayers - 1);
+
+                // Color
+                const baseColor = getLayerColor(i, numLayers);
+                const noise = (Math.random() * 10) - 5;
+                baseColor.h += noise;
+                baseColor.css = `hsl(${baseColor.h}, ${baseColor.s}%, ${baseColor.l}%)`;
+
+                // Geometry params
+                const amplitude = (50 + (Math.random() * 40)) * globalHeightVariation;
+                const frequency = 0.0015 + (Math.random() * 0.002);
+                const seed = Math.random() * 1000;
+
+                let isLake = false;
+                let isLakeGradient = false;
+                let lakeColor = null;
+                const yRange = CONFIG.height - horizonY;
+                const baseY = horizonY + (yRange * (layerProgress * 0.7)) + 50;
+
+                if (i > 0 && Math.random() < 0.35) {
+                    isLake = true;
+                    if (Math.random() < 0.4) {
+                        isLakeGradient = true;
+                        lakeColor = getLakeGradientColors(i, numLayers);
+                    } else {
+                        lakeColor = getPlaneColor(i, numLayers);
+                    }
+                }
+
+                layers.push({
+                    type: isLake ? 'plane' : 'mountain',
+                    id: `layer-${i}`,
+                    gradId: `grad-${i}`,
+                    color: baseColor,
+                    isLakeGradient,
+                    lakeColor,
+                    amplitude,
+                    frequency,
+                    seed,
+                    baseY,
+                    globalHeightVariation,
+                    horizonY
+                });
+            }
+
+            // Celestial Body
+            let celestialBody = null;
+            if (Math.random() > 0.3) {
+                celestialBody = {
+                    cx: randomRange(CONFIG.width * 0.2, CONFIG.width * 0.8),
+                    cy: randomRange(CONFIG.height * 0.1, CONFIG.height * 0.3),
+                    r: randomRange(40, 80)
+                };
+            }
+
+            return { layers, celestialBody, numLayers };
+        }
+
+        // --- Rendering Logic (Frame Update) ---
+
+        function setupStaticDefs() {
+            defs.innerHTML = '';
+            defs.appendChild(createSkyGradient());
+            const skyRect = document.getElementById('sky-rect');
+            if (skyRect) skyRect.setAttribute("fill", "url(#sky-gradient)");
+
+            worldData.layers.forEach(layer => {
+                if (layer.type === 'mountain') {
+                    defs.appendChild(createGradient(layer.gradId, layer.color));
+                } else if (layer.type === 'plane' && layer.isLakeGradient) {
+                    defs.appendChild(createLakeGradient(`${layer.gradId}-lake`, layer.lakeColor));
+                }
+            });
+        }
+
+        function renderScene() {
+            // Check if DOM initialized
+            let domLayers = document.getElementById('scene-group');
+            if (!domLayers) {
+                domLayers = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                domLayers.setAttribute("id", "scene-group");
+                svg.appendChild(domLayers);
+
+                const cBody = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                cBody.setAttribute("id", "celestial-body");
+                domLayers.appendChild(cBody);
+
+                worldData.layers.forEach(layer => {
+                    const el = document.createElementNS("http://www.w3.org/2000/svg", layer.type === 'mountain' ? "path" : "rect");
+                    el.setAttribute("id", `el-${layer.id}`);
+
+                    el.setAttribute("stroke", "none");
+                    if (layer.type === 'mountain') {
+                        el.setAttribute("fill", `url(#${layer.gradId})`);
+                    } else {
+                        if (layer.isLakeGradient) {
+                            el.setAttribute("fill", `url(#${layer.gradId}-lake)`);
+                        } else {
+                            el.setAttribute("fill", layer.lakeColor);
+                        }
+                    }
+                    domLayers.appendChild(el);
+                });
+            }
+
+            // Update Celestial Body
+            const cBody = document.getElementById("celestial-body");
+            if (worldData.celestialBody) {
+                // Reverted to loose wrapping "Sky Width" logic
+                const skyCycle = CONFIG.width * 3;
+
+                const posMod = ((worldData.celestialBody.cx - camera.yaw) % skyCycle + skyCycle) % skyCycle;
+
+                let finalX = posMod;
+                if (finalX > skyCycle / 2) {
+                    if (finalX > skyCycle - 200) {
+                        finalX -= skyCycle;
+                    }
+                }
+
+                const parallaxY = worldData.celestialBody.cy + (camera.pitch * 0.8);
+
+                cBody.setAttribute("cx", finalX);
+                cBody.setAttribute("cy", parallaxY);
+                cBody.setAttribute("r", worldData.celestialBody.r);
+                cBody.setAttribute("fill", "#ffffff");
+                cBody.setAttribute("opacity", "0.6");
+                cBody.style.display = 'block';
+            } else {
+                cBody.style.display = 'none';
+            }
+
+            // Update Layers
+            worldData.layers.forEach(layer => {
+                const el = document.getElementById(`el-${layer.id}`);
+                const pitchOffset = camera.pitch;
+
+                if (layer.type === 'mountain') {
+                    const points = [];
+                    const step = 20;
+
+                    for (let x = -100; x <= CONFIG.width + 100; x += step) {
+                        const worldX = x + camera.yaw;
+
+                        let noiseVal = getNoise(worldX, layer.seed, layer.amplitude, layer.frequency);
+                        let y = layer.baseY - Math.abs(noiseVal);
+
+                        if (layer.id.includes('layer') && (parseInt(layer.id.split('-')[1]) / worldData.numLayers) > 0.5) {
+                            y += getNoise(worldX, layer.seed * 2, 10 * layer.globalHeightVariation, 0.005);
+                        }
+
+                        y += pitchOffset;
+                        points.push(`${x},${y}`);
+                    }
+
+                    points.push(`${CONFIG.width + 100},${CONFIG.height + 200}`);
+                    points.push(`-100,${CONFIG.height + 200}`);
+
+                    el.setAttribute("d", `M ${points.join(" ")} Z`);
+
+                } else if (layer.type === 'plane') {
+                    // Approximate or use stored if available. 
+                    const deterministicOffset = (Math.abs(Math.sin(layer.seed)) * 40 + 20) * layer.globalHeightVariation;
+
+                    const planeY = layer.baseY - deterministicOffset + pitchOffset;
+                    const planeHeight = CONFIG.height * 2;
+                    el.setAttribute("x", "-100");
+                    el.setAttribute("y", planeY);
+                    el.setAttribute("width", CONFIG.width + 200);
+                    el.setAttribute("height", planeHeight);
+                }
+            });
+        }
+
+        function gameLoop() {
+            camera.yaw += input.yawSpeed;
+            camera.pitch += input.pitchSpeed;
+            const MAX_PITCH = 600;
+            camera.pitch = Math.max(-MAX_PITCH, Math.min(MAX_PITCH, camera.pitch));
+            renderScene();
+            renderLoopId = requestAnimationFrame(gameLoop);
+        }
+
+        // --- Interaction ---
+
+        function initGame() {
+            if (renderLoopId) cancelAnimationFrame(renderLoopId);
+            const oldGroup = document.getElementById("scene-group");
+            if (oldGroup) oldGroup.remove();
+
+            worldData = generateWorldData();
+            setupStaticDefs();
+
+            // Reset camera? Or keep it?
+            // "Click to generate new scene" implies keep pos? Or reset?
+            // Let's reset pitch, keep yaw? Or User preference. 
+            // Resetting is safer.
+            camera.pitch = 0;
+            // camera.yaw = 0; // Keep yaw makes it feel continuous
+
+            gameLoop();
+        }
+
+
+        // Mouse Control Logic
+        const centerX = window.innerWidth / 2;
+        const centerY = window.innerHeight / 2;
+
+        // Deadzone radius
+        const DEADZONE = 100;
+        const MAX_SPEED_YAW = 25;
+        const MAX_SPEED_PITCH = 15;
+
+        function updateInput(x, y) {
+            const dx = x - (window.innerWidth / 2);
+            const dy = y - (window.innerHeight / 2);
+
+            // Yaw (Horizontal)
+            if (Math.abs(dx) < DEADZONE) {
+                input.yawSpeed = 0;
+            } else {
+                // Map range [DEADZONE, Width/2] to [0, MAX_SPEED]
+                const sign = Math.sign(dx);
+                const val = Math.abs(dx) - DEADZONE;
+                const maxVal = (window.innerWidth / 2) - DEADZONE;
+                const ratio = Math.min(1, val / maxVal);
+
+                // Non-linear curve for better control
+                const speed = Math.pow(ratio, 1.5) * MAX_SPEED_YAW;
+                input.yawSpeed = sign * speed;
+            }
+
+            // Pitch (Vertical)
+            // Invert Y: Mouse Down (Positive dy) -> Look Down (Camera Pitch Negative? No, Moves scene Up)
+            // If I look down, the world moves UP.
+            // dy > 0 (down) -> World Y decrease?
+            // Wait: earlier: y += pitchOffset.
+            // If pitchOffset is positive, hills go DOWN.
+            // Looking UP means bills go DOWN. 
+            // Mouse UP (dy < 0) -> Look UP -> Hills DOWN (pitch > 0)
+
+            if (Math.abs(dy) < DEADZONE) {
+                input.pitchSpeed = 0;
+            } else {
+                const sign = Math.sign(dy); // -1 up, +1 down
+                const val = Math.abs(dy) - DEADZONE;
+                const maxVal = (window.innerHeight / 2) - DEADZONE;
+                const ratio = Math.min(1, val / maxVal);
+
+                const speed = Math.pow(ratio, 1.5) * MAX_SPEED_PITCH;
+
+                // dy negative (Up) -> want positive pitch speed (Scene moves down)
+                input.pitchSpeed = -sign * speed;
+            }
+        }
+
+        document.addEventListener('mousemove', (e) => {
+            updateInput(e.clientX, e.clientY);
+            showControls();
+        });
+
+        // Handle window resize for center calculation
+        window.addEventListener('resize', () => {
+            // definitions update dynamically in loop
+        });
+
+
+        function downloadSVG(e) {
+            e.stopPropagation();
+            const svgData = new XMLSerializer().serializeToString(svg);
+            const blob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = "abstract-landscape.svg";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        const controls = document.getElementById('controls');
+        const instructionToast = document.getElementById('instruction-toast');
+        let controlsTimeout;
+
+        function showControls() {
+            controls.classList.add('visible');
+            clearTimeout(controlsTimeout);
+            controlsTimeout = setTimeout(() => {
+                controls.classList.remove('visible');
+            }, 5000);
+        }
+
+        document.body.addEventListener('click', () => {
+            initGame();
+        });
+
+        document.getElementById('btn-download').addEventListener('click', downloadSVG);
+
+        // Initial Start
+        initGame();
+
+        // Show instruction toast
+        setTimeout(() => {
+            instructionToast.classList.add('visible');
+            setTimeout(() => {
+                instructionToast.classList.remove('visible');
+            }, 5000);
+        }, 500);
+
+
+    </script>
+</body>
+
+</html>
