@@ -18,3 +18,8 @@ A place for the i.AI team to host experiments in vibe coding simple design tools
 
 ## The code
 [The code for the tools is available on Github](https://github.com/i-dot-ai/design-tool-experiments)
+
+## The hypothesis
+The hypothesis here is that it's more interesting to use AI to generate design _tools_ than it is to directly generate design _outputs_.
+By creating custom design tools we invite ourselves back in to the creative process and break the ongoing dependency on AI.
+Creative outputs become repeatable, editable and legible - we can see how they are made.
