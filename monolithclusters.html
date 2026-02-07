@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,23 +18,28 @@
             user-select: none;
             font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
         }
+
         canvas {
             display: block;
         }
+
         .control-panel {
             backdrop-filter: blur(12px);
             background-color: rgba(255, 255, 255, 0.85);
             transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease;
         }
+
         .control-panel.ui-hidden {
             transform: translate(calc(100% + 2rem), -50%);
             opacity: 0;
             pointer-events: none;
         }
+
         input[type="range"] {
             accent-color: #000;
             cursor: pointer;
         }
+
         input[type="color"] {
             -webkit-appearance: none;
             border: none;
@@ -43,11 +49,16 @@
             border-radius: 4px;
             cursor: pointer;
         }
-        input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+
+        input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+
         input[type="color"]::-webkit-color-swatch {
-            border: 1px solid rgba(0,0,0,0.1);
+            border: 1px solid rgba(0, 0, 0, 0.1);
             border-radius: 4px;
         }
+
         .segmented-control {
             display: flex;
             background: rgba(0, 0, 0, 0.05);
@@ -55,6 +66,7 @@
             border-radius: 8px;
             width: 100%;
         }
+
         .segmented-control button {
             flex: 1;
             padding: 6px 0;
@@ -65,11 +77,13 @@
             transition: all 0.2s ease;
             color: rgba(0, 0, 0, 0.4);
         }
+
         .segmented-control button.active {
             background: white;
             color: black;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
+
         .rando-toggle {
             display: flex;
             align-items: center;
@@ -80,29 +94,39 @@
             cursor: pointer;
             transition: all 0.2s ease;
         }
+
         .rando-toggle.active {
             background: #000;
             color: white;
         }
+
         .rando-dot {
             width: 10px;
             height: 10px;
             border-radius: 50%;
-            background: rgba(0,0,0,0.2);
+            background: rgba(0, 0, 0, 0.2);
         }
-        .active .rando-dot { background: #fff; box-shadow: 0 0 8px #fff; }
+
+        .active .rando-dot {
+            background: #fff;
+            box-shadow: 0 0 8px #fff;
+        }
     </style>
 </head>
+
 <body class="flex flex-col h-screen">
 
-    <button id="uiToggle" class="absolute bottom-6 right-6 z-30 bg-black text-white px-4 py-2 rounded-full text-[10px] uppercase font-bold hover:bg-zinc-800 shadow-xl transition-all active:scale-95">
+    <button id="uiToggle"
+        class="absolute bottom-6 right-6 z-30 bg-black text-white px-4 py-2 rounded-full text-[10px] uppercase font-bold hover:bg-zinc-800 shadow-xl transition-all active:scale-95">
         Hide UI
     </button>
 
-    <div id="controlPanel" class="control-panel absolute top-1/2 right-6 -translate-y-1/2 z-10 p-8 rounded-3xl border border-black/5 shadow-2xl flex flex-col items-center gap-8 w-[300px] max-h-[90vh] overflow-y-auto">
+    <div id="controlPanel"
+        class="control-panel absolute top-1/2 right-6 -translate-y-1/2 z-10 p-8 rounded-3xl border border-black/5 shadow-2xl flex flex-col items-center gap-8 w-[300px] max-h-[90vh] overflow-y-auto">
         <div class="w-full text-black border-b border-black/5 pb-6">
-            <h1 class="text-2xl font-bold tracking-tighter uppercase leading-tight text-black">Monolith Clusters</h1>
-            <p class="text-[10px] text-gray-400 tracking-widest uppercase italic mt-1">Drag to rotate • Scroll to zoom</p>
+            <h1 class="text-xl font-bold tracking-tighter uppercase leading-tight text-black">Monolith Clusters</h1>
+            <p class="text-[9px] text-gray-400 tracking-wider uppercase italic mt-1">Drag to rotate • Scroll to zoom
+            </p>
         </div>
 
         <div class="flex flex-col gap-6 w-full text-black">
@@ -131,6 +155,15 @@
             </div>
 
             <div class="flex flex-col gap-2">
+                <div class="flex justify-between text-[10px] uppercase font-bold text-black">
+                    <label>Perspective</label>
+                    <span id="perspectiveVal">45°</span>
+                </div>
+                <!-- 0 = Ortho, 50 = Normal (Default), 100 = Extreme -->
+                <input type="range" id="perspectiveInput" min="0" max="100" step="1" value="50" class="w-full">
+            </div>
+
+            <div class="flex flex-col gap-2">
                 <label class="text-[10px] uppercase font-bold text-black opacity-50">Render Mode</label>
                 <div class="segmented-control" id="modeControl">
                     <button data-mode="solid" class="active">Solid</button>
@@ -140,7 +173,7 @@
             </div>
 
             <div id="randoToggle" class="rando-toggle">
-                <label class="text-[10px] uppercase font-bold pointer-events-none text-black">Rando Mode</label>
+                <label class="text-[10px] uppercase font-bold pointer-events-none">Rando Mode</label>
                 <div class="rando-dot"></div>
             </div>
         </div>
@@ -162,10 +195,12 @@
             </div>
 
             <div class="flex flex-col gap-3">
-                <button id="refreshBtn" class="w-full bg-black text-white px-6 py-3 rounded-xl text-xs uppercase font-bold hover:bg-zinc-800 transition-colors active:scale-95">
+                <button id="refreshBtn"
+                    class="w-full bg-black text-white px-6 py-3 rounded-xl text-xs uppercase font-bold hover:bg-zinc-800 transition-colors active:scale-95">
                     Regenerate
                 </button>
-                <button id="exportSvgBtn" class="w-full border border-zinc-300 px-6 py-3 rounded-xl text-xs uppercase font-bold hover:bg-black hover:text-white transition-all">
+                <button id="exportSvgBtn"
+                    class="w-full border border-zinc-300 px-6 py-3 rounded-xl text-xs uppercase font-bold hover:bg-black hover:text-white transition-all">
                     Export SVG
                 </button>
             </div>
@@ -175,7 +210,8 @@
     <div id="canvas-container" class="w-full h-full"></div>
 
     <script>
-        let scene, camera, renderer, group;
+        let scene, renderer, group;
+        let perspectiveCamera, orthographicCamera, activeCamera;
         let keyLight, fillLight;
         let isDragging = false;
         let previousMousePosition = { x: 0, y: 0 };
@@ -184,9 +220,14 @@
         let renderMode = 'solid';
         let randoMode = false;
         let lastRandoTime = 0;
-        let uiHidden = false; 
+        let uiHidden = false;
         let rects = [];
         let baseUnit = 20;
+
+        // Perspective Constants
+        const INITIAL_FOV = 45;
+        const INITIAL_DIST = 1200;
+        const VISIBLE_HEIGHT = 2 * INITIAL_DIST * Math.tan((INITIAL_FOV * Math.PI / 180) / 2);
 
         const boxCountInput = document.getElementById('boxCount');
         const variationInput = document.getElementById('variation');
@@ -203,12 +244,28 @@
         const qtyDisplay = document.getElementById('qtyVal');
         const varDisplay = document.getElementById('varVal');
         const conDisplay = document.getElementById('conVal');
+        const perspectiveInput = document.getElementById('perspectiveInput');
+        const perspectiveVal = document.getElementById('perspectiveVal');
 
         function initThree() {
             scene = new THREE.Scene();
             scene.background = new THREE.Color(bgColorInput.value);
-            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 10000);
-            camera.position.z = 1200;
+
+            const aspect = window.innerWidth / window.innerHeight;
+            perspectiveCamera = new THREE.PerspectiveCamera(INITIAL_FOV, aspect, 1, 10000);
+            perspectiveCamera.position.z = INITIAL_DIST;
+
+            orthographicCamera = new THREE.OrthographicCamera(
+                -VISIBLE_HEIGHT * aspect / 2,
+                VISIBLE_HEIGHT * aspect / 2,
+                VISIBLE_HEIGHT / 2,
+                -VISIBLE_HEIGHT / 2,
+                1,
+                10000
+            );
+            orthographicCamera.position.z = INITIAL_DIST;
+            activeCamera = perspectiveCamera;
+
             renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(window.devicePixelRatio);
@@ -231,7 +288,7 @@
                 isDragging = true;
                 document.body.style.cursor = 'none';
             });
-            
+
             window.addEventListener('mouseup', () => {
                 isDragging = false;
                 document.body.style.cursor = 'default';
@@ -252,8 +309,15 @@
 
             window.addEventListener('wheel', (e) => {
                 if (e.target.closest('#controlPanel') || e.target.closest('#uiToggle')) return;
-                camera.position.z += e.deltaY * 0.5;
-                camera.position.z = Math.min(Math.max(camera.position.z, 200), 3000);
+
+                if (activeCamera.isPerspectiveCamera) {
+                    activeCamera.position.z += e.deltaY * 0.5;
+                    activeCamera.position.z = Math.min(Math.max(activeCamera.position.z, 200), 3000);
+                } else {
+                    orthographicCamera.zoom -= e.deltaY * 0.001;
+                    orthographicCamera.zoom = Math.max(0.1, Math.min(orthographicCamera.zoom, 5));
+                    orthographicCamera.updateProjectionMatrix();
+                }
             }, { passive: false });
 
             window.addEventListener('resize', onWindowResize);
@@ -261,10 +325,45 @@
             generate();
         }
 
+        function updatePerspective() {
+            const rawVal = parseInt(perspectiveInput.value);
+
+            if (rawVal < 2) {
+                activeCamera = orthographicCamera;
+                perspectiveVal.innerText = "Ortho";
+            } else {
+                let fov;
+                if (rawVal <= 50) {
+                    fov = 1 + (rawVal - 2) * (44 / 48);
+                } else {
+                    fov = 45 + (rawVal - 50) * (85 / 50);
+                }
+
+                perspectiveVal.innerText = Math.round(fov) + "°";
+
+                activeCamera = perspectiveCamera;
+                activeCamera.fov = fov;
+
+                // Dolly Zoom: Maintain visible height at the scene center
+                const dist = VISIBLE_HEIGHT / (2 * Math.tan((fov * Math.PI / 180) / 2));
+                activeCamera.position.z = dist;
+                activeCamera.updateProjectionMatrix();
+            }
+        }
+
         function onWindowResize() {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
+            const aspect = window.innerWidth / window.innerHeight;
+
+            perspectiveCamera.aspect = aspect;
+            perspectiveCamera.updateProjectionMatrix();
+
             renderer.setSize(window.innerWidth, window.innerHeight);
+
+            orthographicCamera.left = -VISIBLE_HEIGHT * aspect / 2;
+            orthographicCamera.right = VISIBLE_HEIGHT * aspect / 2;
+            orthographicCamera.top = VISIBLE_HEIGHT / 2;
+            orthographicCamera.bottom = -VISIBLE_HEIGHT / 2;
+            orthographicCamera.updateProjectionMatrix();
         }
 
         function morph() {
@@ -302,11 +401,11 @@
             splitIndex = possibleSplits.length === 0 ? Math.floor(units / 2) : possibleSplits[Math.floor(Math.random() * possibleSplits.length)];
             const splitPos = splitIndex * baseUnit;
             if (splitVertical) {
-                subdivide({x: r.x, y: r.y, w: splitPos, h: r.h}, complexity, variation, contrast, currentDepth + 1);
-                subdivide({x: r.x + splitPos, y: r.y, w: r.w - splitPos, h: r.h}, complexity, variation, contrast, currentDepth + 1);
+                subdivide({ x: r.x, y: r.y, w: splitPos, h: r.h }, complexity, variation, contrast, currentDepth + 1);
+                subdivide({ x: r.x + splitPos, y: r.y, w: r.w - splitPos, h: r.h }, complexity, variation, contrast, currentDepth + 1);
             } else {
-                subdivide({x: r.x, y: r.y, w: r.w, h: splitPos}, complexity, variation, contrast, currentDepth + 1);
-                subdivide({x: r.x, y: r.y + splitPos, w: r.w, h: r.h - splitPos}, complexity, variation, contrast, currentDepth + 1);
+                subdivide({ x: r.x, y: r.y, w: r.w, h: splitPos }, complexity, variation, contrast, currentDepth + 1);
+                subdivide({ x: r.x, y: r.y + splitPos, w: r.w, h: r.h - splitPos }, complexity, variation, contrast, currentDepth + 1);
             }
         }
 
@@ -319,8 +418,8 @@
             const keyDot = Math.max(0, n.dot(keyPos));
             const fillPos = fLight.position.clone().normalize();
             const fillDot = Math.max(0, n.dot(fillPos));
-            const result = base.clone().multiplyScalar(0.4); 
-            result.add(keyCol.clone().multiplyScalar(keyDot * 0.7)); 
+            const result = base.clone().multiplyScalar(0.4);
+            result.add(keyCol.clone().multiplyScalar(keyDot * 0.7));
             result.add(fillCol.clone().multiplyScalar(fillDot * 0.4));
             return result;
         }
@@ -330,20 +429,20 @@
             const variation = parseInt(variationInput.value);
             const contrast = parseInt(contrastInput.value);
             qtyDisplay.innerText = complexity; varDisplay.innerText = variation; conDisplay.innerText = contrast;
-            baseUnit = 20; 
-            while(group.children.length > 0) group.remove(group.children[0]); 
+            baseUnit = 20;
+            while (group.children.length > 0) group.remove(group.children[0]);
             let attempts = 0;
             const masterDim = 800;
-            const startRect = { x: -masterDim/2, y: -masterDim/2, w: masterDim, h: masterDim };
+            const startRect = { x: -masterDim / 2, y: -masterDim / 2, w: masterDim, h: masterDim };
             do { rects = []; subdivide(startRect, complexity, variation, contrast, 0); attempts++; } while (rects.length < 10 && attempts < 20);
 
             const faceData = [
-                { pos: [1, 0, 0], rot: [0, Math.PI/2, 0], size: (w, h, d) => [d, h], normal: new THREE.Vector3(1,0,0) },
-                { pos: [-1, 0, 0], rot: [0, -Math.PI/2, 0], size: (w, h, d) => [d, h], normal: new THREE.Vector3(-1,0,0) },
-                { pos: [0, 1, 0], rot: [-Math.PI/2, 0, 0], size: (w, h, d) => [w, d], normal: new THREE.Vector3(0,1,0) },
-                { pos: [0, -1, 0], rot: [Math.PI/2, 0, 0], size: (w, h, d) => [w, d], normal: new THREE.Vector3(0,-1,0) },
-                { pos: [0, 0, 1], rot: [0, 0, 0], size: (w, h, d) => [w, h], normal: new THREE.Vector3(0,0,1) },
-                { pos: [0, 0, -1], rot: [0, Math.PI, 0], size: (w, h, d) => [w, h], normal: new THREE.Vector3(0,0,-1) }
+                { pos: [1, 0, 0], rot: [0, Math.PI / 2, 0], size: (w, h, d) => [d, h], normal: new THREE.Vector3(1, 0, 0) },
+                { pos: [-1, 0, 0], rot: [0, -Math.PI / 2, 0], size: (w, h, d) => [d, h], normal: new THREE.Vector3(-1, 0, 0) },
+                { pos: [0, 1, 0], rot: [-Math.PI / 2, 0, 0], size: (w, h, d) => [w, d], normal: new THREE.Vector3(0, 1, 0) },
+                { pos: [0, -1, 0], rot: [Math.PI / 2, 0, 0], size: (w, h, d) => [w, d], normal: new THREE.Vector3(0, -1, 0) },
+                { pos: [0, 0, 1], rot: [0, 0, 0], size: (w, h, d) => [w, h], normal: new THREE.Vector3(0, 0, 1) },
+                { pos: [0, 0, -1], rot: [0, Math.PI, 0], size: (w, h, d) => [w, h], normal: new THREE.Vector3(0, 0, -1) }
             ];
 
             const edgeMaterial = new THREE.LineBasicMaterial({ color: 0x000000 });
@@ -358,8 +457,8 @@
                     const [fw, fh] = face.size(r.w, r.h, depth);
                     const geometry = new THREE.PlaneGeometry(fw, fh);
                     const bakedColor = getShadedColor(face.normal, 0xeeeeee, keyLight, fillLight);
-                    
-                    const material = new THREE.MeshBasicMaterial({ 
+
+                    const material = new THREE.MeshBasicMaterial({
                         color: bakedColor,
                         side: THREE.FrontSide,
                         transparent: renderMode === 'wireframe',
@@ -367,7 +466,7 @@
                     });
 
                     const plane = new THREE.Mesh(geometry, material);
-                    plane.position.set(face.pos[0] * r.w/2, face.pos[1] * r.h/2, face.pos[2] * depth/2);
+                    plane.position.set(face.pos[0] * r.w / 2, face.pos[1] * r.h / 2, face.pos[2] * depth / 2);
                     plane.rotation.set(...face.rot);
                     plane.userData.normal = { x: face.normal.x, y: face.normal.y, z: face.normal.z };
                     monolithGroup.add(plane);
@@ -399,7 +498,7 @@
         function updateLightColors() {
             keyLight.color.set(keyColorInput.value);
             fillLight.color.set(fillColorInput.value);
-            
+
             // Re-bake shaded colors on existing geometry without regenerating the whole cluster
             group.children.forEach(monolith => {
                 monolith.children.forEach(child => {
@@ -421,26 +520,33 @@
         function exportToSVG() {
             const exportScene = new THREE.Scene();
             exportScene.background = new THREE.Color(bgColorInput.value);
-            
+
             const tempGroup = group.clone(true);
             exportScene.add(tempGroup);
 
             const renderables = [];
-            const cameraPos = camera.position.clone();
+            const renderCam = activeCamera;
+            const cameraPos = renderCam.position.clone();
             const worldQuat = new THREE.Quaternion();
             tempGroup.getWorldQuaternion(worldQuat);
 
             tempGroup.children.forEach(monolith => {
                 monolith.children.forEach(child => {
                     child.updateMatrixWorld(true);
-                    
+
                     if (child.type === 'Mesh') {
                         const normalData = child.userData.normal;
                         if (normalData) {
                             const normal = new THREE.Vector3(normalData.x, normalData.y, normalData.z);
                             const faceNormal = normal.clone().applyQuaternion(worldQuat);
-                            const toCamera = cameraPos.clone().sub(child.getWorldPosition(new THREE.Vector3())).normalize();
-                            
+
+                            let toCamera;
+                            if (renderCam.isOrthographicCamera) {
+                                toCamera = new THREE.Vector3(0, 0, 1).applyQuaternion(renderCam.quaternion).normalize();
+                            } else {
+                                toCamera = cameraPos.clone().sub(child.getWorldPosition(new THREE.Vector3())).normalize();
+                            }
+
                             if (faceNormal.dot(toCamera) > -0.1) {
                                 renderables.push(child);
                             } else {
@@ -456,7 +562,7 @@
             renderables.sort((a, b) => {
                 const distA = a.getWorldPosition(new THREE.Vector3()).distanceToSquared(cameraPos);
                 const distB = b.getWorldPosition(new THREE.Vector3()).distanceToSquared(cameraPos);
-                return distB - distA; 
+                return distB - distA;
             });
 
             renderables.forEach((obj, index) => {
@@ -466,12 +572,12 @@
             const svgRenderer = new THREE.SVGRenderer();
             svgRenderer.setSize(window.innerWidth, window.innerHeight);
             svgRenderer.setQuality('high');
-            svgRenderer.render(exportScene, camera);
-            
-            const XMLSerializer = window.XMLSerializer || (function() { return { serializeToString: (node) => node.outerHTML }; })();
+            svgRenderer.render(exportScene, renderCam);
+
+            const XMLSerializer = window.XMLSerializer || (function () { return { serializeToString: (node) => node.outerHTML }; })();
             const serializer = new XMLSerializer();
             let svgNode = svgRenderer.domElement;
-            
+
             const bgRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
             bgRect.setAttribute("width", "100%"); bgRect.setAttribute("height", "100%");
             bgRect.setAttribute("fill", bgColorInput.value);
@@ -496,7 +602,7 @@
             currentRotation.y += (targetRotation.y - currentRotation.y) * 0.1;
             group.rotation.x = currentRotation.x;
             group.rotation.y = currentRotation.y;
-            renderer.render(scene, camera);
+            renderer.render(scene, activeCamera);
         }
 
         uiToggle.addEventListener('click', () => {
@@ -524,7 +630,9 @@
             });
         });
 
-        window.onload = () => { initThree(); updateBackground(); };
+        perspectiveInput.addEventListener('input', updatePerspective);
+        window.onload = () => { initThree(); updatePerspective(); updateBackground(); };
     </script>
 </body>
+
 </html>
