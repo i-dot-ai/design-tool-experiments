@@ -16,6 +16,8 @@ A place for the i.AI team to host experiments in vibe coding simple design tools
 - [3D plane animation studio](https://i-dot-ai.github.io/design-tool-experiments/3dplanestudio)
 - [Monolith clusters](https://i-dot-ai.github.io/design-tool-experiments/monolithclusters)
 
+Note, the tools are mostly optimised for desktop devices - your mileage on mobile will vary.
+
 ## The code
 [The code for the tools is available on Github](https://github.com/i-dot-ai/design-tool-experiments)
 
