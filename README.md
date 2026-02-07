@@ -14,7 +14,7 @@ A place for the i.AI team to host experiments in vibe coding simple design tools
 - [Kinetic flow](https://i-dot-ai.github.io/design-tool-experiments/kineticflow)
 - [Vector hills](https://i-dot-ai.github.io/design-tool-experiments/vectorhills)
 - [3D plane animation studio](https://i-dot-ai.github.io/design-tool-experiments/3dplanestudio)
-- [Monolith clusters](https://i-dot-ai.github.io/design-tool-experiments/monolith-clusters)
+- [Monolith clusters](https://i-dot-ai.github.io/design-tool-experiments/monolithclusters)
 
 ## The code
 [The code for the tools is available on Github](https://github.com/i-dot-ai/design-tool-experiments)
