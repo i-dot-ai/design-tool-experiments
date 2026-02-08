@@ -511,7 +511,7 @@
                 { pos: [0, 0, -1], rot: [0, Math.PI, 0], size: (w, h, d) => [w, h], normal: new THREE.Vector3(0, 0, -1) }
             ];
 
-            const edgeMaterial = new THREE.LineBasicMaterial({ color: 0x000000 });
+            const edgeMaterial = new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 0.5 });
 
             rects.forEach(r => {
                 const depthUnits = Math.ceil(Math.random() * (contrast + 1));
